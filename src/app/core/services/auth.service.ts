@@ -2,12 +2,13 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, of } from 'rxjs';
+import { API_URL } from '../constants/api.constants';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = `${API_URL}/auth`;
 
   readonly usuarioActual = signal<string | null>(this.obtenerUsuarioStorage());
   readonly rolesActuales = signal<string[]>(this.obtenerRolesStorage());

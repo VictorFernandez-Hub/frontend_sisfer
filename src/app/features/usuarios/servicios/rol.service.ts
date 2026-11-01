@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { API_URL } from '../../../core/constants/api.constants';
 
 @Injectable({ providedIn: 'root' })
 export class RolService {
   private http = inject(HttpClient);
-  private url = 'http://localhost:8080/api/roles';
+  private url = `${API_URL}/roles`;
 
   listar() {
     return this.http.get<any[]>(this.url, { withCredentials: true });

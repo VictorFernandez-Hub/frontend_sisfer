@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { API_URL } from '../../core/constants/api.constants';
 
 @Component({
   selector: 'app-bitacora',
@@ -57,7 +58,7 @@ export class BitacoraComponent implements OnInit {
   registros = signal<any[]>([]);
 
   ngOnInit(): void {
-    this.http.get<any[]>('http://localhost:8080/api/bitacora', { withCredentials: true })
+    this.http.get<any[]>(`${API_URL}/bitacora`, { withCredentials: true })
       .subscribe(data => this.registros.set(data));
   }
 
