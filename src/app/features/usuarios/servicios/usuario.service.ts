@@ -26,4 +26,8 @@ export class UsuarioService {
   eliminarUsuario(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, { withCredentials: true });
   }
+
+  reenviarActivacion(id: number) {
+  return this.http.post(`${this.apiUrl}/${id}/reenviar`, {}, { withCredentials: true });
+  }
 }

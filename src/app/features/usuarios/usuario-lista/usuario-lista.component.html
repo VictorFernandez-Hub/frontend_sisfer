@@ -18,9 +18,10 @@
       </div>
 
       <div class="modal-body p-4">
+        
   @if (avisoGuardado()) {
     <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-      style="background: rgba(0,0,0,.35); z-index: 2000;">
+      style="background: rgba(0,0,0,.35); z-index: 9999;">
       <div class="bg-white rounded shadow p-4 text-center" style="min-width: 320px;">
         <div class="fw-bold mb-2"
           [class.text-success]="avisoGuardado().includes('exitosamente')"
@@ -186,13 +187,20 @@
                 <label for="estadoInput">Estado de Cuenta</label>
               </div>
             </div>
+                </div>  <!-- cierra el estado -->
 
+@if (usuarioParaEditar()?.estado === 'INACTIVO') {
+  <div class="mt-2">
+    <button type="button" class="btn btn-outline-warning btn-sm" (click)="reenviarActivacion()">
+      Reenviar correo de activación
+    </button>
+  </div>
+}
             <div class="col-12 d-flex justify-content-end gap-2 mt-4 border-top pt-3">
               <button type="button" (click)="resetearFormulario()"
                 class="btn btn-light px-4 text-secondary fw-semibold">Limpiar</button>
               <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">Guardar Usuario</button>
             </div>
-          </div>
         </form>
       </div>
     </div>

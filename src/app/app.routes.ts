@@ -9,6 +9,11 @@ export const routes: Routes = [
   },
 
   {
+  path: 'activar',
+  loadComponent: () => import('./features/auth/pages/activar/activar.component').then(m => m.ActivarComponent)
+  },
+
+  {
     path: '',
     component: MainLayoutComponent,
     canActivate: [authGuard],
@@ -44,6 +49,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/bitacora/bitacora.component')
           .then(m => m.BitacoraComponent)
       },
+
     ]
   },
 

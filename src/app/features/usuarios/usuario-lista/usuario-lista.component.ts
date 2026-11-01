@@ -42,7 +42,7 @@ export class UsuarioListaComponent implements OnInit {
     tipoContrato: [''],
     fecInicio: [''],
     fecFin: [''],
-    estado: ['ACTIVO', [Validators.required]],
+    estado: ['INACTIVO', [Validators.required]],
     clave: [''],
     confirmarClave: [''],
     codigoRol: ['VENDEDOR', [Validators.required]]
@@ -130,7 +130,7 @@ export class UsuarioListaComponent implements OnInit {
         this.cargando = false;
       },
       error: (err) => {
-        console.error('Error al consultar la BD:', err);
+        console.error('Error al consultar la Base de Datos:', err);
         this.cargando = false;
       }
     });
@@ -139,7 +139,7 @@ export class UsuarioListaComponent implements OnInit {
   prepararNuevoUsuario(): void {
     this.usuarioParaEditar.set(null);
     this.mostrarClave.set(true);
-    this.usuarioForm.reset({ estado: 'ACTIVO', codigoRol: 'VENDEDOR' });
+    this.usuarioForm.reset({ estado: 'INACTIVO', codigoRol: 'VENDEDOR' });
   }
 
   editarUsuario(usuario: UsuarioResponseDTO): void {
@@ -213,10 +213,11 @@ export class UsuarioListaComponent implements OnInit {
       }
     }
 
-    if (!this.usuarioParaEditar() && !this.usuarioForm.value.clave) {
-      this.avisoGuardado.set('La clave es obligatoria al crear un usuario.');
-      return;
-    }
+    // bloque que exige la clave
+    //if (!this.usuarioParaEditar() && !this.usuarioForm.value.clave) {
+      //this.avisoGuardado.set('La clave es obligatoria al crear un usuario.');
+      //return;
+    //}
 
     const clave = this.usuarioForm.value.clave;
     const confirmar = this.usuarioForm.value.confirmarClave;
@@ -258,14 +259,17 @@ export class UsuarioListaComponent implements OnInit {
   }
 
   private mensajeSegunEstado(estado: string, esNuevo: boolean): string {
-    if (estado === 'INACTIVO') {
-      return 'Usuario inactivo. Debe comunicarse con el administrador del negocio.';
-    }
-    if (estado === 'BLOQUEADO') {
-      return 'Usuario bloqueado. Debe comunicarse con el área de sistemas.';
-    }
-    return esNuevo ? '¡Usuario creado exitosamente!' : '¡Usuario actualizado exitosamente!';
-  }
+      if (esNuevo) {
+          return 'Usuario creado. Se envió el correo de activación.';
+      }
+      if (estado === 'INACTIVO') {
+         return 'Usuario inactivo. Debe comunicarse con el administrador del negocio.';
+      }
+      if (estado === 'BLOQUEADO') {
+        return 'Usuario bloqueado. Debe comunicarse con el área de sistemas.';
+      }
+        return '¡Usuario actualizado exitosamente!';
+      }
 
   aceptarAviso(): void {
     const texto = this.avisoGuardado();
@@ -288,7 +292,16 @@ export class UsuarioListaComponent implements OnInit {
   resetearFormulario(): void {
     this.usuarioForm.reset({
       idUsuario: this.usuarioParaEditar()?.idUsuario || null,
-      estado: 'ACTIVO'
+      estado: 'INACTIVO'
+    });
+  }
+
+  reenviarActivacion(): void {
+    const id = this.usuarioParaEditar()?.idUsuario;
+    if (!id) return;
+      this.usuarioService.reenviarActivacion(id).subscribe({
+        next: () => this.avisoGuardado.set('El correo de activación fue enviado. Revise la bandeja de entrada.'),
+        error: () => this.notificationService.mostrar('No se pudo reenviar.', 'error')
     });
   }
 
