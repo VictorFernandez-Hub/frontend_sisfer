@@ -1,0 +1,214 @@
+<div class="container-fluid px-4 mt-4 d-flex">
+  @if (puedeModificar()) {
+    <button type="button" class="btn btn-primary ms-auto d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal"
+      data-bs-target="#modalRegistroCli" (click)="prepararNuevoCliente()">
+      <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
+      <span>Agregar Cliente</span>
+    </button>
+  }
+</div>
+
+<div class="container-fluid mt-4">
+
+  <h2 class="text-white text-center mt-4 mb-3 fw-bold">Listado General de Clientes</h2>
+
+  <app-buscador [placeholder]="'Buscar por nombre, documento, correo o teléfono'" (alBuscar)="filtrarClientes($event)">
+  </app-buscador>
+
+  <div class="card shadow-sm border-0 overflow-hidden rounded-3">
+    <div class="table-responsive">
+
+      <table class="table table-hover table-sm text-nowrap align-middle mb-0">
+
+        <thead class="table-light text-uppercase fs-7 border-bottom text-secondary">
+          <tr>
+            <th scope="col" class="text-center py-2">ID</th>
+            <th scope="col" class="py-2">Tipo / N° Doc</th>
+            <th scope="col" class="py-2">Nombres o Razón Social</th>
+            <th scope="col" class="py-2">Dirección</th>
+            <th scope="col" class="py-2">Teléfono</th>
+            <th scope="col" class="py-2">Email</th>
+            <th scope="col" class="py-2">Estado</th>
+            <th scope="col" class="text-muted py-2">Fec. Registro</th>
+            <th scope="col" class="text-end py-2 pe-4">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (cliente of clientes(); track cliente.id_cliente) {
+          <tr class="border-bottom">
+            <td class="text-center fw-bold text-secondary py-1.5">{{ cliente.id_cliente }}</td>
+            <td class="text-secondary font-monospace py-1.5">
+              <span class="badge bg-secondary-subtle text-secondary me-1 py-1 px-1.5 fw-normal">{{ cliente.tipo_doc }}</span>
+              <span>{{ cliente.num_doc }}</span>
+            </td>
+            <td class="text-dark fw-semibold py-1.5">{{ cliente.nombres }}</td>
+            <td class="text-secondary small text-truncate py-1.5" style="max-width: 200px;">{{ cliente.direccion || '-' }}</td>
+            <td class="text-dark py-1.5">{{ cliente.telefono || '-' }}</td>
+            <td class="text-secondary py-1.5">{{ cliente.email || '-' }}</td>
+            <td class="py-1.5">
+              <span class="badge py-1 px-2" [ngClass]="{
+                    'bg-success-subtle text-success border border-success-subtle': cliente.estado === 'ACTIVO',
+                    'bg-danger-subtle text-danger border border-danger-subtle': cliente.estado === 'INACTIVO'
+                  }">
+                {{ cliente.estado }}
+              </span>
+            </td>
+            <td class="text-muted small py-1.5">{{ cliente.fec_registro | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="text-end py-1.5 pe-4">
+              @if (puedeModificar()) {
+                <div class="d-inline-flex gap-1.5">
+                  <button type="button"
+                    class="btn btn-sm btn-light border text-dark d-flex align-items-center gap-1 px-2 py-0.5 shadow-xs"
+                    data-bs-toggle="modal" data-bs-target="#modalRegistroCli" (click)="editar(cliente)"
+                    title="Editar Cliente">
+                    <i class="bi bi-pencil-square text-warning" aria-hidden="true"></i>
+                    <span>Editar</span>
+                  </button>
+
+                  <button type="button"
+                    class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-2 py-0.5 shadow-xs"
+                    (click)="eliminar(cliente.id_cliente)" title="Eliminar Cliente">
+                    <i class="bi bi-trash3" aria-hidden="true"></i>
+                    <span>Borrar</span>
+                  </button>
+                </div>
+              }
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="9" class="text-center py-5 bg-light">
+              <div class="d-flex flex-column align-items-center justify-content-center py-3">
+                <div class="text-secondary bg-white shadow-sm rounded-circle p-3 mb-3">
+                  <i class="bi bi-people fs-3 text-muted" aria-hidden="true"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">No se encontraron clientes registrados</h6>
+                <p class="text-secondary small mb-0">Los registros de compradores aparecerán listados en esta sección.</p>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalRegistroCli" tabindex="-1" aria-labelledby="modalRegistroCliLabel" aria-hidden="true"
+  data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+
+      <div class="modal-header bg-light border-bottom py-3">
+        <h5 class="modal-title fw-bold text-dark" id="modalRegistroCliLabel">
+          @if (clienteParaEditar()) {
+          <i class="bi bi-pencil-square me-2 text-warning" aria-hidden="true"></i>Editar Cliente
+          } @else {
+          <i class="bi bi-person-plus me-2 text-primary" aria-hidden="true"></i>Nuevo Cliente
+          }
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar modal"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <form [formGroup]="clienteForm" (ngSubmit)="guardarCliente()" autocomplete="off">
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control bg-light" id="id_cliente" formControlName="id_cliente"
+                  placeholder="ID" readonly tabindex="-1" />
+                <label for="id_cliente">ID Cliente</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <select class="form-select" id="tipo_doc" formControlName="tipo_doc">
+                  <option value="DNI">DNI</option>
+                  <option value="RUC">RUC</option>
+                </select>
+                <label for="tipo_doc">Tipo Documento *</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="num_doc" formControlName="num_doc"
+                  placeholder="Número de Documento"
+                  [attr.maxlength]="clienteForm.get('tipo_doc')?.value === 'RUC' ? 11 : 8"
+                  [ngClass]="{ 'is-invalid': clienteForm.get('num_doc')?.touched && clienteForm.get('num_doc')?.invalid }" />
+                <label for="num_doc">
+                  N° Documento ({{ clienteForm.get('tipo_doc')?.value === 'RUC' ? '11 dígitos' : '8 dígitos' }}) *
+                </label>
+                <div class="invalid-feedback" *ngIf="clienteForm.get('num_doc')?.touched && clienteForm.get('num_doc')?.invalid">
+                  <span *ngIf="clienteForm.get('num_doc')?.errors?.['required']">El número de documento es obligatorio.</span>
+                  <span *ngIf="clienteForm.get('num_doc')?.errors?.['pattern']">
+                    {{ clienteForm.get('tipo_doc')?.value === 'RUC' ? 'El RUC debe tener exactamente 11 dígitos numéricos.' : 'El DNI debe tener exactamente 8 dígitos numéricos.' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="nombres" formControlName="nombres"
+                  placeholder="Nombres o Razón Social"
+                  [ngClass]="{ 'is-invalid': clienteForm.get('nombres')?.touched && clienteForm.get('nombres')?.invalid }" />
+                <label for="nombres">Nombres / Razón Social *</label>
+                <div class="invalid-feedback" *ngIf="clienteForm.get('nombres')?.touched && clienteForm.get('nombres')?.invalid">
+                  <span *ngIf="clienteForm.get('nombres')?.errors?.['required']">El nombre o razón social es obligatorio.</span>
+                  <span *ngIf="clienteForm.get('nombres')?.errors?.['maxlength']">Máximo 150 caracteres.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="form-floating mb-3">
+                <input type="tel" class="form-control" id="telefono" formControlName="telefono" placeholder="Teléfono"
+                  maxlength="9"
+                  [ngClass]="{ 'is-invalid': clienteForm.get('telefono')?.touched && clienteForm.get('telefono')?.invalid }" />
+                <label for="telefono">Teléfono / Celular (9 dígitos)</label>
+                <div class="invalid-feedback" *ngIf="clienteForm.get('telefono')?.touched && clienteForm.get('telefono')?.invalid">
+                  <span *ngIf="clienteForm.get('telefono')?.errors?.['pattern']">El teléfono debe tener exactamente 9 dígitos numéricos.</span>
+                </div>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="email" formControlName="email"
+                  placeholder="Correo Electrónico"
+                  [ngClass]="{ 'is-invalid': clienteForm.get('email')?.touched && clienteForm.get('email')?.invalid }" />
+                <label for="email">Correo Electrónico</label>
+                <div class="invalid-feedback" *ngIf="clienteForm.get('email')?.touched && clienteForm.get('email')?.invalid">
+                  <span *ngIf="clienteForm.get('email')?.errors?.['email']">Ingrese un correo electrónico válido.</span>
+                </div>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="direccion" formControlName="direccion"
+                  placeholder="Dirección" />
+                <label for="direccion">Dirección Fiscal / Domicilio</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <select class="form-select" id="estado" formControlName="estado">
+                  <option value="ACTIVO">ACTIVO</option>
+                  <option value="INACTIVO">INACTIVO</option>
+                </select>
+                <label for="estado">Estado *</label>
+              </div>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 mt-4 border-top pt-3">
+              <button type="button" class="btn btn-light px-4 text-secondary fw-semibold"
+                (click)="resetearFormulario()">
+                Limpiar
+              </button>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm" [disabled]="clienteForm.invalid">
+                Guardar Cliente
+              </button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

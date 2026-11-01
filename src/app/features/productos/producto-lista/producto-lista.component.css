@@ -1,0 +1,8 @@
+/* Evita que nombres o descripciones largas estiren la tabla */
+.celda-producto {
+  max-width: 260px;
+}
+
+.celda-proveedor {
+  max-width: 220px;
+}

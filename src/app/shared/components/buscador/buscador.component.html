@@ -1,0 +1,26 @@
+<div class="row mb-3">
+  <div class="col-12 col-md-6 mx-auto">
+    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+      <span class="input-group-text bg-white border-end-0 text-muted">
+        <i class="bi bi-search"></i>
+      </span>
+      <input 
+        #txtBuscar
+        type="text" 
+        class="form-control border-start-0 border-end-0 ps-1 py-2" 
+        [placeholder]="placeholder()" 
+        (input)="onInput($event)"
+        (keyup.enter)="alBuscar.emit(txtBuscar.value)"
+        autocomplete="off" />
+      
+      <button 
+        class="btn d-flex align-items-center gap-2 px-4 text-white fw-semibold border-0" 
+        type="button"
+        style="background-color: #FFA500;"
+        (click)="alBuscar.emit(txtBuscar.value)">
+        <i class="bi bi-sliders"></i>
+        Buscar
+      </button>
+    </div>
+  </div>
+</div>

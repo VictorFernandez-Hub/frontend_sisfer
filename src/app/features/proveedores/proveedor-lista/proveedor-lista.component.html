@@ -1,0 +1,317 @@
+@if (errorFormulario()) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style="background: rgba(0,0,0,.45); z-index: 2000;">
+    <div class="bg-white rounded-3 shadow p-4 text-center" style="width: 380px;">
+      <div class="fw-bold text-danger mb-2">Atención</div>
+      <div class="mb-3">{{ errorFormulario() }}</div>
+      <button type="button" class="btn btn-primary" (click)="errorFormulario.set('')">Aceptar</button>
+    </div>
+  </div>
+}
+
+@if (puedeGestionar()) {
+<div class="container-fluid px-4 mt-4 d-flex">
+  <button type="button" class="btn btn-primary ms-auto d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal"
+    data-bs-target="#modalRegistroProv" (click)="prepararNuevoProveedor()">
+    <i class="bi bi-truck" aria-hidden="true"></i>
+    <span>Agregar Proveedor</span>
+  </button>
+</div>
+}
+
+<div class="container-fluid mt-4">
+
+  <h2 class="text-white text-center mt-4 mb-3 fw-bold">Listado General de Proveedores</h2>
+
+  <!-- Reutilizable Componente Buscador -->
+  <app-buscador [placeholder]="'Buscar por RUC, razón social, nombre comercial o contacto...'"
+    (alBuscar)="filtrarProveedores($event)">
+  </app-buscador>
+
+  @if (errorMessage()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+    <span>{{ errorMessage() }}</span>
+  </div>
+  }
+
+  <div class="card shadow-sm border-0 overflow-hidden rounded-3">
+    <div class="table-responsive">
+
+      <table class="table table-hover table-sm text-nowrap align-middle mb-0">
+
+        <thead class="table-light text-uppercase fs-7 border-bottom text-secondary">
+          <tr>
+            <th scope="col" class="text-center py-2">ID</th>
+            <th scope="col" class="py-2">Tipo / N° Doc</th>
+            <th scope="col" class="py-2">Razón Social</th>
+            <th scope="col" class="py-2">Contacto</th>
+            <th scope="col" class="py-2">Teléfono</th>
+            <th scope="col" class="py-2">Email</th>
+            <th scope="col" class="py-2">Dirección</th>
+            <th scope="col" class="py-2">Estado</th>
+            <th scope="col" class="text-muted py-2">Fec. Registro</th>
+            @if (puedeGestionar()) {
+            <th scope="col" class="text-end py-2 pe-4">Acciones</th>
+            }
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (cargando()) {
+          <tr>
+            <td colspan="10" class="text-center py-4 text-secondary">
+              <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+              Cargando proveedores...
+            </td>
+          </tr>
+          } @else {
+          @for (proveedor of proveedoresFiltrados(); track proveedor.id_proveedor) {
+          <tr class="border-bottom">
+            <td class="text-center fw-bold text-secondary">{{ proveedor.id_proveedor }}</td>
+            <td class="text-secondary font-monospace">
+              <span class="badge bg-secondary-subtle text-secondary me-1 fw-normal">{{ proveedor.tipo_doc }}</span>
+              <span>{{ proveedor.num_doc }}</span>
+            </td>
+            <td>
+              <div class="text-dark fw-semibold">{{ proveedor.razon_social }}</div>
+              @if (proveedor.nom_comercial) {
+              <div class="text-secondary small">{{ proveedor.nom_comercial }}</div>
+              }
+            </td>
+            <td class="text-dark">{{ proveedor.contacto || '-' }}</td>
+            <td class="text-dark">{{ proveedor.telefono || '-' }}</td>
+            <td class="text-secondary">{{ proveedor.email || '-' }}</td>
+            <td class="text-secondary small text-truncate text-truncate-celda">{{ proveedor.direccion || '-' }}</td>
+            <td>
+              <span class="badge py-1 px-2" [ngClass]="{
+                    'bg-success-subtle text-success border border-success-subtle': proveedor.estado === 'ACTIVO',
+                    'bg-danger-subtle text-danger border border-danger-subtle': proveedor.estado === 'INACTIVO'
+                  }">
+                {{ proveedor.estado }}
+              </span>
+            </td>
+            <td class="text-muted small">{{ proveedor.fec_registro | date:'dd/MM/yyyy HH:mm' }}</td>
+            @if (puedeGestionar()) {
+            <td class="text-end pe-4">
+              <div class="d-inline-flex gap-1">
+                <button type="button"
+                  class="btn btn-sm btn-light border text-dark d-flex align-items-center gap-1 px-2 shadow-sm"
+                  data-bs-toggle="modal" data-bs-target="#modalRegistroProv" (click)="editar(proveedor)"
+                  title="Editar proveedor">
+                  <i class="bi bi-pencil-square text-warning" aria-hidden="true"></i>
+                  <span>Editar</span>
+                </button>
+
+                <button type="button"
+                  class="btn btn-sm d-flex align-items-center gap-1 px-2 shadow-sm"
+                  [ngClass]="proveedor.estado === 'ACTIVO' ? 'btn-outline-secondary' : 'btn-outline-success'"
+                  (click)="cambiarEstado(proveedor)"
+                  [title]="proveedor.estado === 'ACTIVO' ? 'Desactivar proveedor' : 'Activar proveedor'">
+                  <i class="bi" [ngClass]="proveedor.estado === 'ACTIVO' ? 'bi-toggle-off' : 'bi-toggle-on'" aria-hidden="true"></i>
+                  <span>{{ proveedor.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}</span>
+                </button>
+
+                <button type="button"
+                  class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-2 shadow-sm"
+                  (click)="eliminar(proveedor)" title="Eliminar proveedor">
+                  <i class="bi bi-trash3" aria-hidden="true"></i>
+                  <span>Borrar</span>
+                </button>
+              </div>
+            </td>
+            }
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="10" class="text-center py-5 bg-light">
+              <div class="d-flex flex-column align-items-center justify-content-center py-3">
+                <div class="text-secondary bg-white shadow-sm rounded-circle p-3 mb-3">
+                  <i class="bi bi-truck fs-3 text-muted" aria-hidden="true"></i>
+                </div>
+                @if (termino()) {
+                <h6 class="fw-bold text-dark mb-1">Ningún proveedor coincide con "{{ termino() }}"</h6>
+                <p class="text-secondary small mb-0">Pruebe con otro RUC, razón social o contacto.</p>
+                } @else {
+                <h6 class="fw-bold text-dark mb-1">Aún no hay proveedores registrados</h6>
+                <p class="text-secondary small mb-0">Registre un proveedor para poder usarlo en las compras.</p>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Unificado (Creación / Edición) -->
+<div class="modal fade" id="modalRegistroProv" tabindex="-1" aria-labelledby="modalRegistroProvLabel" aria-hidden="true"
+  data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+
+      <div class="modal-header bg-light border-bottom py-3">
+        <h5 class="modal-title fw-bold text-dark" id="modalRegistroProvLabel">
+          @if (proveedorParaEditar()) {
+          <i class="bi bi-pencil-square me-2 text-warning" aria-hidden="true"></i>Editar Proveedor
+          } @else {
+          <i class="bi bi-truck me-2 text-primary" aria-hidden="true"></i>Nuevo Proveedor
+          }
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar modal"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        @if (errorFormulario()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+          <span>{{ errorFormulario() }}</span>
+        </div>
+        }
+
+        <form [formGroup]="proveedorForm" (ngSubmit)="guardarProveedor()" autocomplete="off">
+          <div class="row g-3">
+
+            <!-- Columna Izquierda: identificación -->
+            <div class="col-md-6">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control bg-light" id="id_proveedor" formControlName="id_proveedor"
+                  placeholder="ID" readonly tabindex="-1" />
+                <label for="id_proveedor">ID Proveedor</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <select class="form-select" id="tipo_doc_prov" formControlName="tipo_doc">
+                  @for (tipo of tiposDoc; track tipo) {
+                  <option [value]="tipo">{{ tipo }}</option>
+                  }
+                </select>
+                <label for="tipo_doc_prov">Tipo Documento *</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="num_doc_prov" formControlName="num_doc"
+                        placeholder="Número de Documento" inputmode="numeric"
+                        [attr.maxlength]="reglaDocActual().maxLength"
+                        [class.is-invalid]="esInvalido('num_doc')"
+                        (input)="soloNumerosDoc($event)" />
+                <label for="num_doc_prov">N° Documento ({{ reglaDocActual().ayuda }}) *</label>
+               @if (esInvalido('num_doc')) {
+                  <div class="invalid-feedback">
+              @if (proveedorForm.get('num_doc')?.errors?.['required']) {
+                  El número de documento es obligatorio.
+          } @else {
+                  Formato inválido: {{ reglaDocActual().ayuda }}.
+      }
+    </div>
+  }
+</div>
+            
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="razon_social" formControlName="razon_social"
+                  placeholder="Razón Social" [class.is-invalid]="esInvalido('razon_social')" />
+                <label for="razon_social">Razón Social *</label>
+                @if (esInvalido('razon_social')) {
+                <div class="invalid-feedback">
+                  @if (proveedorForm.get('razon_social')?.errors?.['required']) {
+                  La razón social es obligatoria.
+                  } @else {
+                  Máximo 150 caracteres.
+                  }
+                </div>
+                }
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="nom_comercial" formControlName="nom_comercial"
+                  placeholder="Nombre Comercial" [class.is-invalid]="esInvalido('nom_comercial')" />
+                <label for="nom_comercial">Nombre Comercial</label>
+                <div class="invalid-feedback">Máximo 150 caracteres.</div>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: contacto -->
+            <div class="col-md-6">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="contacto" formControlName="contacto"
+                  placeholder="Persona de contacto" [class.is-invalid]="esInvalido('contacto')" />
+                <label for="contacto">Persona de Contacto</label>
+                <div class="invalid-feedback">Máximo 100 caracteres.</div>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="tel" class="form-control" formControlName="telefono"
+                  placeholder="Celular" maxlength="9" [class.is-invalid]="esInvalido('telefono')" />
+                <label>Celular (9 dígitos, empieza con 9) *</label>
+                <div class="invalid-feedback">
+                    @if (proveedorForm.value.telefono && !proveedorForm.value.telefono.startsWith('9')) {
+                              Debe empezar con 9.
+                  } @else {
+                              Debe tener 9 dígitos.
+                                }
+                  </div>
+                </div>
+
+              <div class="form-floating mb-3">
+                <input type="tel" class="form-control" formControlName="telefono_fijo"
+                  placeholder="Fijo" maxlength="7" />
+                <label>Teléfono fijo (opcional)</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" formControlName="anexo"
+                  placeholder="Anexo" maxlength="6" />
+                <label>Anexo (opcional)</label>
+              </div>
+              
+              <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="email_prov" formControlName="email"
+                  placeholder="Correo Electrónico" [class.is-invalid]="esInvalido('email')" />
+                <label for="email_prov">Correo Electrónico</label>
+                <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="direccion_prov" formControlName="direccion"
+                  placeholder="Dirección" [class.is-invalid]="esInvalido('direccion')" />
+                <label for="direccion_prov">Dirección Fiscal</label>
+                <div class="invalid-feedback">Máximo 200 caracteres.</div>
+              </div>
+
+              <div class="form-floating mb-3">
+                <select class="form-select" id="estado_prov" formControlName="estado">
+                  <option value="ACTIVO">ACTIVO</option>
+                  <option value="INACTIVO">INACTIVO</option>
+                </select>
+                <label for="estado_prov">Estado *</label>
+              </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="col-12 d-flex justify-content-end gap-2 mt-4 border-top pt-3">
+              <button type="button" class="btn btn-light px-4 text-secondary fw-semibold"
+                (click)="resetearFormulario()">
+                Limpiar
+              </button>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm"
+                [disabled]="proveedorForm.invalid || guardando()">
+                @if (guardando()) {
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                }
+                <button type="submit" class="btn btn-primary px-4" [disabled]="proveedorForm.invalid">
+                Guardar Proveedor
+                </button>
+              </button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

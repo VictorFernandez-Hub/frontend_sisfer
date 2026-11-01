@@ -1,0 +1,17 @@
+.border-end-custom {
+  border-right: 1px solid #e3e3e3;
+}
+
+.backend-card {
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.input-group-text {
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Evita que al enfocar el input el ícono quede desalineado estéticamente */
+.form-control:focus + .input-group-text {
+  border-color: #86b7fe;
+}

@@ -1,0 +1,54 @@
+/* Esto evita que los botones y textos estiren la tabla más allá de la pantalla */
+#tablaProducto {
+  table-layout: auto;
+  min-width: 100%;
+}
+
+/* Forzamos a que la última columna (Opciones) no ocupe más espacio del necesario */
+#tablaProducto th:last-child, 
+#tablaProducto td:last-child {
+  white-space: nowrap;
+  width: 1%;
+}
+
+/* 1. Aseguramos que el contenedor raíz ocupe toda la pantalla */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* 2. Fijamos la imagen de fondo y hacemos que el layout sea flex para sticky footer */
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+              url('/imagenes/fondo.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* 3. El main ocupa todo el espacio disponible, empujando el footer al fondo */
+main {
+  flex: 1 0 auto !important;
+  min-height: 0 !important;
+}
+
+/* 4. El footer se queda al final */
+footer {
+  flex-shrink: 0 !important;
+  width: 100%;
+  margin-top: auto !important;
+}
+
+/* 5. ELIMINA las líneas blancas arriba y abajo del navbar */
+.navbar {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}

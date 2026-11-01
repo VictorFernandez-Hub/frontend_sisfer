@@ -1,0 +1,39 @@
+/* --- Menú de Navegación (Navbar) --- */
+
+/* Forzamos visibilidad en pantallas de escritorio (Desktop) */
+@media (min-width: 992px) {
+  .navbar-collapse {
+    display: flex !important;
+    visibility: visible !important;
+    height: auto !important;
+    opacity: 1 !important;
+  }
+
+  .navbar-nav {
+    flex-direction: row !important;
+    align-items: center;
+  }
+}
+
+/* Estilos base de los enlaces */
+.navbar-nav .nav-link {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 600;
+  padding: 0.5rem 1rem !important;
+  transition: all 0.3s ease-in-out;
+  border-bottom: 2px solid transparent;
+}
+
+/* Estados Hover y Pestaña Activa */
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: #FFA500 !important;
+  border-bottom: 2px solid #FFA500 !important;
+}
+
+/* Botón hamburguesa para dispositivos móviles */
+.navbar-toggler:hover {
+  border-color: #FFA500;
+  filter: brightness(1.2);
+}

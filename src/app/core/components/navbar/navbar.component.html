@@ -1,0 +1,84 @@
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-black">
+  <div class="container-fluid">
+    <div class="navbar-brand d-flex align-items-center gap-2 m-0 fs-6">
+      <i class="bi bi-wrench-adjustable-circle text-warning fs-5"></i>
+      <div class="d-flex flex-row align-items-center gap-2">
+        <span class="fw-bold text-warning">USER</span>
+        <span class="text-secondary">|</span>
+        <span class="text-white-70">{{ username() || 'Usuario' }}</span>
+      </div>
+    </div>
+
+    <button class="navbar-toggler border-0 shadow-none" type="button"
+      (click)="toggleMenu()" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" [class.show]="isMenuOpen()" id="menuNavbar">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1 ms-lg-4" (click)="closeMenu()">
+
+        @if (tieneRol(ROLES_CLIENTES) || tieneModulo('CLIENTES')) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/clientes" routerLinkActive="active">CLIENTES</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_PRODUCTOS) || tieneModulo('PRODUCTOS')) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/productos" routerLinkActive="active">PRODUCTOS</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_VENTAS)) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/ventas" routerLinkActive="active">VENTAS</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_COMPRAS)) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/compras" routerLinkActive="active">COMPRAS</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_PROVEEDORES) || tieneModulo('PROVEEDORES')) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/proveedores" routerLinkActive="active">PROVEEDORES</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_REPORTES)) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/reportes" routerLinkActive="active">REPORTES</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_USUARIOS) || tieneModulo('USUARIOS')) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/usuarios" routerLinkActive="active">USUARIOS</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_USUARIOS)) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/roles" routerLinkActive="active">ROLES</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_USUARIOS)) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/bitacora" routerLinkActive="active">BITÁCORA</a>
+          </li>
+        }
+
+      </ul>
+
+      <div class="d-flex align-items-center">
+        <button (click)="logout()" type="button"
+          class="btn btn-outline-light btn-sm px-3 d-flex align-items-center gap-2">
+          <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>

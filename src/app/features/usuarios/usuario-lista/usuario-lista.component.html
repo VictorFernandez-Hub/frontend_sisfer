@@ -1,0 +1,291 @@
+<div class="container-fluid px-4 mt-4 d-flex">
+  <button (click)="prepararNuevoUsuario()" type="button"
+    class="btn btn-primary ms-auto d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal"
+    data-bs-target="#modalRegistroUsuario">
+    <i class="bi bi-person-plus-fill"></i>
+    Agregar Usuario
+  </button>
+</div>
+
+<div class="modal fade" id="modalRegistroUsuario" tabindex="-1" aria-labelledby="modalRegistroUsuarioLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+
+      <div class="modal-header bg-light border-bottom-0 py-3">
+        <h5 class="modal-title fw-bold text-dark" id="modalRegistroUsuarioLabel">Gestión de Accesos / Usuarios</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body p-4">
+  @if (avisoGuardado()) {
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+      style="background: rgba(0,0,0,.35); z-index: 2000;">
+      <div class="bg-white rounded shadow p-4 text-center" style="min-width: 320px;">
+        <div class="fw-bold mb-2"
+          [class.text-success]="avisoGuardado().includes('exitosamente')"
+          [class.text-danger]="!avisoGuardado().includes('exitosamente')">
+          {{ avisoGuardado().includes('exitosamente') ? 'Listo' : 'Atención' }}
+        </div>
+        <div class="mb-3">{{ avisoGuardado() }}</div>
+        <button type="button" class="btn btn-primary" (click)="aceptarAviso()">Aceptar</button>
+      </div>
+    </div>
+  }  
+        <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" id="formUsuario">
+          <div class="row g-3">
+
+            <div class="col-md-6 mt-2">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control bg-light" id="usuarioId" formControlName="idUsuario"
+                  placeholder="ID" readonly />
+                <label for="usuarioId">ID Usuario</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="cuentaInput" formControlName="cuenta"
+                  placeholder="Cuenta de Usuario" />
+                <label for="cuentaInput">Nombre de Usuario / Cuenta</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="nombresInput" formControlName="nombresCompleto"
+                  placeholder="Nombres Completos" />
+                <label for="nombresInput">Nombres y Apellidos Completos</label>
+              </div>
+            </div>
+
+            <div class="col-md-6 mt-2">
+              <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="emailInput" formControlName="email"
+                  placeholder="Correo Electrónico" />
+                <label for="emailInput">Correo Electrónico</label>
+              </div>
+
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="telefonoInput" formControlName="telefono"
+                  placeholder="Teléfono" maxlength="9" inputmode="numeric"
+                  (input)="soloNumerosTelefono($event)" />
+                 <label for="telefonoInput">Número Telefónico</label>
+              </div>
+            
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="dniInput" formControlName="dni"
+                 placeholder="DNI" maxlength="8" inputmode="numeric"
+                  (input)="soloNumerosDni($event)" />
+                <label for="dniInput">DNI (8 dígitos)</label>
+                </div>
+                
+                 <!-- CLAVE -->
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="cambiarClave"
+                [checked]="mostrarClave()" (change)="mostrarClave.set(!mostrarClave())" />
+                <label class="form-check-label" for="cambiarClave">Cambiar clave</label>
+              </div>
+
+@if (mostrarClave()) {
+  <div class="mb-3">
+    <div class="input-group">
+      <div class="form-floating flex-grow-1">
+        <input
+          [type]="hidePassword() ? 'password' : 'text'"
+          class="form-control border-end-0"
+          id="claveInput"
+          formControlName="clave"
+          placeholder="Clave"
+          (focus)="activarReglas()"
+          (blur)="ocultarReglas()" />
+        <label for="claveInput">Clave</label>
+      </div>
+      <button type="button" class="btn btn-outline-secondary border-start-0 text-muted px-3"
+        (click)="togglePasswordVisibility()">
+        <i class="bi" [ngClass]="hidePassword() ? 'bi-eye' : 'bi-eye-slash'"></i>
+      </button>
+    </div>
+  </div>
+
+  @if (mostrarReglas()) {
+    <ul class="list-unstyled small mb-3">
+      <li [class.text-success]="tieneMinimo(usuarioForm.value.clave)" [class.text-danger]="!tieneMinimo(usuarioForm.value.clave)">Mínimo 8 caracteres</li>
+      <li [class.text-success]="tieneMayuscula(usuarioForm.value.clave)" [class.text-danger]="!tieneMayuscula(usuarioForm.value.clave)">Una mayúscula</li>
+      <li [class.text-success]="tieneNumero(usuarioForm.value.clave)" [class.text-danger]="!tieneNumero(usuarioForm.value.clave)">Un número</li>
+      <li [class.text-success]="tieneSimbolo(usuarioForm.value.clave)" [class.text-danger]="!tieneSimbolo(usuarioForm.value.clave)">Un símbolo</li>
+    </ul>
+  }
+
+  <!-- CONFIRMAR CLAVE -->
+  <div class="mb-3">
+    <div class="input-group">
+      <div class="form-floating flex-grow-1">
+        <input
+          [type]="hidePassword() ? 'password' : 'text'"
+          class="form-control border-end-0"
+          id="confirmarClaveInput"
+          formControlName="confirmarClave"
+          placeholder="Confirmar clave"
+          (focus)="activarReglas()"
+          (blur)="ocultarReglas()" />
+        <label for="confirmarClaveInput">Confirmar clave</label>
+      </div>
+      <button type="button" class="btn btn-outline-secondary border-start-0 text-muted px-3"
+        (click)="togglePasswordVisibility()">
+        <i class="bi" [ngClass]="hidePassword() ? 'bi-eye' : 'bi-eye-slash'"></i>
+      </button>
+    </div>
+  </div>
+
+  @if (mostrarReglas()) {
+    <ul class="list-unstyled small mb-3">
+      <li [class.text-success]="tieneMinimo(usuarioForm.value.confirmarClave)" [class.text-danger]="!tieneMinimo(usuarioForm.value.confirmarClave)">Mínimo 8 caracteres</li>
+      <li [class.text-success]="tieneMayuscula(usuarioForm.value.confirmarClave)" [class.text-danger]="!tieneMayuscula(usuarioForm.value.confirmarClave)">Una mayúscula</li>
+      <li [class.text-success]="tieneNumero(usuarioForm.value.confirmarClave)" [class.text-danger]="!tieneNumero(usuarioForm.value.confirmarClave)">Un número</li>
+      <li [class.text-success]="tieneSimbolo(usuarioForm.value.confirmarClave)" [class.text-danger]="!tieneSimbolo(usuarioForm.value.confirmarClave)">Un símbolo</li>
+    </ul>
+  }
+}
+
+          <div class="form-floating mb-3">
+            <select class="form-select" id="rolInput" formControlName="codigoRol">
+            <option value="">Seleccione</option>
+          @for (r of rolesDisponibles(); track r.codigo) {
+            <option [value]="r.codigo">{{ r.nombre }}</option>
+            }
+          </select>
+            <label for="rolInput">Rol</label>
+          </div>         
+             
+              @if (esPersonal()) {
+  <div class="form-floating mb-3">
+    <select class="form-select" id="tipoContrato" formControlName="tipoContrato">
+      <option value="">Seleccione</option>
+      <option value="INDETERMINADO">Indeterminado</option>
+      <option value="PLAZO_FIJO">Plazo fijo</option>
+    </select>
+    <label for="tipoContrato">Tipo de contrato</label>
+  </div>
+
+  <div class="form-floating mb-3">
+    <input type="date" class="form-control" id="fecInicio" formControlName="fecInicio" />
+    <label for="fecInicio">Fecha de inicio</label>
+  </div>
+
+  @if (usuarioForm.value.tipoContrato === 'PLAZO_FIJO') {
+    <div class="form-floating mb-3">
+      <input type="date" class="form-control" id="fecFin" formControlName="fecFin" />
+      <label for="fecFin">Fecha de fin</label>
+    </div>
+  }
+}
+
+              <div class="form-floating mb-3">
+                <select class="form-select" id="estadoInput" formControlName="estado">
+                  <option value="ACTIVO">ACTIVO</option>
+                  <option value="INACTIVO">INACTIVO</option>
+                  <option value="BLOQUEADO">BLOQUEADO</option>
+                </select>
+                <label for="estadoInput">Estado de Cuenta</label>
+              </div>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 mt-4 border-top pt-3">
+              <button type="button" (click)="resetearFormulario()"
+                class="btn btn-light px-4 text-secondary fw-semibold">Limpiar</button>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">Guardar Usuario</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt-4">
+
+  <h2 class="text-white text-center mt-4 mb-3">Listado General de Usuarios</h2>
+
+  <app-buscador placeholder="Buscar por cuenta, nombres, correo o teléfono..." (alBuscar)="filtrarUsuarios($event)">
+  </app-buscador>
+
+  <div class="card shadow-sm border-0 overflow-hidden rounded-3">
+    <div class="table-responsive">
+
+      <!-- Nainayon ti table-sm tapno bassit ti spacing dagiti celdas -->
+      <table class="table table-hover table-sm text-nowrap align-middle mb-0">
+
+        <thead class="table-light text-uppercase fs-7 border-bottom text-secondary">
+          <tr>
+            <th class="text-center py-2">ID</th>
+            <th class="py-2">Cuenta</th>
+            <th class="py-2">Nombre Completo</th>
+            <th class="py-2">Email</th>
+            <th class="py-2">Teléfono</th>
+            <th class="py-2">Estado</th>
+            <th class="py-2">Roles</th>
+            <th class="text-end py-2 pe-4">Opciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (user of usuarios(); track user.idUsuario) {
+          <tr class="border-bottom">
+            <td class="fw-bold text-secondary text-center py-1.5">{{ user.idUsuario }}</td>
+            <td class="text-nowrap fw-bold text-dark font-monospace py-1.5">{{ user.cuenta }}</td>
+            <td class="text-nowrap py-1.5">{{ user.nombresCompleto }}</td>
+            <td class="py-1.5">{{ user.email || 'Sin registro' }}</td>
+            <td class="py-1.5">{{ user.telefono || '-' }}</td>
+            <td class="py-1.5">
+              <span class="badge py-1 px-2"
+                [class]="user.estado === 'ACTIVO' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'">
+                {{ user.estado }}
+              </span>
+            </td>
+            <td class="py-1.5">
+              <div class="d-inline-flex flex-wrap gap-1 align-items-center">
+                @for (rol of user.roles; track $index) {
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5 fw-normal">
+                  {{ rol }}
+                </span>
+                }
+              </div>
+            </td>
+            <td class="text-end py-1.5 pe-4">
+              <div class="d-inline-flex gap-1.5">
+                <button type="button"
+                  class="btn btn-sm btn-light border text-dark d-flex align-items-center gap-1 px-2 py-0.5 shadow-xs"
+                  data-bs-toggle="modal" data-bs-target="#modalRegistroUsuario" (click)="editarUsuario(user)"
+                  title="Editar Usuario">
+                  <i class="bi bi-pencil-square text-warning" aria-hidden="true"></i>
+                  <span>Editar</span>
+                </button>
+
+                <button type="button"
+                  class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-2 py-0.5 shadow-xs"
+                  (click)="eliminarUsuario(user.idUsuario)" title="Eliminar Usuario">
+                  <i class="bi bi-trash3" aria-hidden="true"></i>
+                  <span>Borrar</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="text-center py-5 bg-light">
+              <div class="d-flex flex-column align-items-center justify-content-center py-3">
+                <div class="text-secondary bg-white shadow-sm rounded-circle p-3 mb-3">
+                  <i class="bi bi-people fs-3 mb-2"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">No hay usuarios registrados</h6>
+                <p class="text-secondary small mb-0">Los accesos y el personal de la plataforma aparecerán listados
+                  aquí.</p>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+
+      </table> <!-- Naiserra ti table tag dita -->
+
+    </div>
+  </div>
+
+</div>

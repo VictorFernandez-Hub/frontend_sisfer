@@ -1,0 +1,143 @@
+<div class="container d-flex justify-content-center align-items-center vh-100">
+  <div class="d-flex shadow-sm p-4 backend-card" style="max-width: 700px; width: 100%; background-color: #f9f9f9;">
+
+    <div class="d-flex flex-column align-items-center justify-content-center pe-4 border-end-custom" style="width: 250px;">
+      <div class="logo-login mb-3">
+        <img src="imagenes/logo.png" alt="Logo Ferretería" style="max-width: 130px; height: auto;" />
+      </div>
+      <div class="text-center">
+        <h3 class="h5 fw-bold text-dark m-0">La Solución Ferretera</h3>
+      </div>
+    </div>
+
+    <div class="flex-grow-1 ps-4">
+
+      @if (!mostrarRecuperar()) {
+        <h2 class="text-center mb-4 fw-semibold text-secondary">Iniciar Sesión</h2>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <div class="mb-3">
+            <label for="cuenta" class="form-label fw-medium">Usuario / Cuenta</label>
+            <input id="cuenta" type="text" formControlName="cuenta" class="form-control" placeholder="Ej. edelfin" />
+          </div>
+
+          <div class="mb-3">
+            <label for="clave" class="form-label fw-medium">Contraseña</label>
+            <div class="input-group">
+              <input id="clave" [type]="hideLoginPassword() ? 'password' : 'text'" formControlName="clave"
+                class="form-control border-end-0" placeholder="••••••••" />
+              <button type="button" class="btn btn-outline-secondary border-start-0"
+                (click)="toggleLoginPasswordVisibility()">
+                <i class="bi" [ngClass]="hideLoginPassword() ? 'bi-eye' : 'bi-eye-slash'"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="rememberMe" formControlName="rememberMe" />
+            <label class="form-check-label text-muted" for="rememberMe">Recordarme en este equipo</label>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Captcha: ¿cuánto es {{ captchaA }} + {{ captchaB }}?</label>
+            <input class="form-control" [(ngModel)]="respuestaCaptcha" [ngModelOptions]="{standalone: true}" name="respuestaCaptcha" />
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">Ingresar al Sistema</button>
+        </form>
+
+        <button type="button" class="btn btn-outline-secondary w-100 mt-3" (click)="mostrarRecuperar.set(true)">
+          ¿Olvidaste tu contraseña?
+        </button>
+
+      } @else {
+  <h2 class="text-center mb-4 fw-semibold text-secondary">Recuperar contraseña</h2>
+
+  @if (!correoEnviado()) {
+    <input class="form-control mb-3" placeholder="Correo" [(ngModel)]="correoRecuperar" name="correoRecuperar" />
+    <button type="button" class="btn btn-secondary w-100" (click)="enviarCodigo()">Enviar código</button>
+  }
+
+  @if (correoEnviado() && !codigoValido()) {
+    <div class="alert alert-success text-center">Se envió un código a {{ correoRecuperar }}.</div>
+    <input class="form-control mb-2" placeholder="Código de 6 dígitos" [(ngModel)]="codigoIngresado" name="codigoIngresado" maxlength="6" />
+    <button type="button" class="btn btn-primary w-100" (click)="validarCodigo()">Validar código</button>
+    <p class="text-center text-muted mt-2">
+      @if (segundosRestantes() > 0) {
+        Puede pedir otro código en {{ segundosRestantes() }} segundos.
+      } @else {
+        <button type="button" class="btn btn-link" (click)="correoEnviado.set(false)">Pedir nuevo código</button>
+      }
+    </p>
+  }
+
+  @if (codigoValido()) {
+    <p class="text-success text-center">Código correcto. Cree su nueva clave.</p>
+    <div class="input-group mb-2">
+      <input class="form-control border-end-0" [type]="hideRecoveryPassword() ? 'password' : 'text'"
+        placeholder="Clave nueva" [(ngModel)]="claveNueva" name="claveNueva"
+        (focus)="activarReglasRecuperar()" (blur)="ocultarReglasRecuperar()" />
+      <button type="button" class="btn btn-outline-secondary border-start-0" (click)="toggleRecoveryPasswordVisibility()">
+        <i class="bi" [ngClass]="hideRecoveryPassword() ? 'bi-eye' : 'bi-eye-slash'"></i>
+      </button>
+    </div>
+    @if (mostrarReglasRecuperar()) {
+      <ul class="list-unstyled small mb-2">
+        <li [class.text-success]="tieneMinimo(claveNueva)" [class.text-danger]="!tieneMinimo(claveNueva)">Mínimo 8 caracteres</li>
+        <li [class.text-success]="tieneMayuscula(claveNueva)" [class.text-danger]="!tieneMayuscula(claveNueva)">Una mayúscula</li>
+        <li [class.text-success]="tieneNumero(claveNueva)" [class.text-danger]="!tieneNumero(claveNueva)">Un número</li>
+        <li [class.text-success]="tieneSimbolo(claveNueva)" [class.text-danger]="!tieneSimbolo(claveNueva)">Un símbolo</li>
+      </ul>
+    }
+    <div class="input-group mb-2">
+      <input class="form-control border-end-0" [type]="hideRecoveryPassword() ? 'password' : 'text'"
+        placeholder="Confirmar clave" [(ngModel)]="confirmarClaveNueva" name="confirmarClaveNueva"
+        (focus)="activarReglasRecuperar()" (blur)="ocultarReglasRecuperar()" />
+      <button type="button" class="btn btn-outline-secondary border-start-0" (click)="toggleRecoveryPasswordVisibility()">
+        <i class="bi" [ngClass]="hideRecoveryPassword() ? 'bi-eye' : 'bi-eye-slash'"></i>
+      </button>
+    </div>
+    @if (mostrarReglasRecuperar()) {
+  <ul class="list-unstyled small mb-2">
+    <li [class.text-success]="tieneMinimo(confirmarClaveNueva)" [class.text-danger]="!tieneMinimo(confirmarClaveNueva)">Mínimo 8 caracteres</li>
+    <li [class.text-success]="tieneMayuscula(confirmarClaveNueva)" [class.text-danger]="!tieneMayuscula(confirmarClaveNueva)">Una mayúscula</li>
+    <li [class.text-success]="tieneNumero(confirmarClaveNueva)" [class.text-danger]="!tieneNumero(confirmarClaveNueva)">Un número</li>
+    <li [class.text-success]="tieneSimbolo(confirmarClaveNueva)" [class.text-danger]="!tieneSimbolo(confirmarClaveNueva)">Un símbolo</li>
+  </ul>
+}
+    <button class="btn btn-secondary w-100" type="button" (click)="recuperarClave()">Guardar clave nueva</button>
+  }
+
+  @if (mensajeRecuperar()) {
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+      style="background: rgba(0,0,0,.35); z-index: 2000;">
+      <div class="bg-white rounded shadow p-4 text-center" style="min-width: 300px;">
+        <div class="fw-bold mb-2"
+          [class.text-success]="mensajeRecuperar().includes('cambio de clave')"
+          [class.text-danger]="!mensajeRecuperar().includes('cambio de clave')">
+          {{ mensajeRecuperar().includes('cambio de clave') ? 'Listo' : 'Atención' }}
+        </div>
+        <div class="mb-3">{{ mensajeRecuperar() }}</div>
+        <button type="button" class="btn btn-primary" (click)="cerrarAvisoRecuperar()">Aceptar</button>
+      </div>
+    </div>
+  }
+
+  <button type="button" class="btn btn-outline-primary w-100 mt-3" (click)="volverAlLogin()">
+    Volver al inicio de sesión
+  </button>
+}
+        @if (errorMessage()) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style="background: rgba(0,0,0,.35); z-index: 2000;">
+    <div class="bg-white rounded shadow p-4 text-center" style="min-width: 300px;">
+      <div class="fw-bold mb-2 text-danger">Atención</div>
+      <div class="mb-3">{{ errorMessage() }}</div>
+      <button type="button" class="btn btn-primary" (click)="errorMessage.set('')">Aceptar</button>
+    </div>
+  </div>
+}
+      
+    </div>
+  </div>
+</div>
