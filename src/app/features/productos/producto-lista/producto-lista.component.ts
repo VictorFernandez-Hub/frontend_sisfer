@@ -227,21 +227,6 @@ export class ProductoListaComponent implements OnInit {
     });
   }
 
-  cambiarEstado(p: Producto): void {
-    const nuevoEstado = p.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    if (nuevoEstado === 'INACTIVO' &&
-      !confirm(`¿Dar de baja "${p.codigo} - ${p.nombre}"?\nNo aparecerá en ventas ni compras, pero se conserva su historial.`)) {
-      return;
-    }
-    this.errorMessage.set('');
-    this.productoService.cambiarEstado(p.id_producto!, nuevoEstado).subscribe({
-      next: () => this.cargarProductos(),
-      error: (err: HttpErrorResponse) => {
-        this.errorMessage.set(extraerMensajeError(err, 'No se pudo cambiar el estado del producto.'));
-      }
-    });
-  }
-
   eliminarProducto(p: Producto): void {
     if (!p.id_producto || p.estado !== 'INACTIVO') return;
     const detalle = p.eliminable === false
