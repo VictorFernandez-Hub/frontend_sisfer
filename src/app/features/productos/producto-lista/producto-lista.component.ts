@@ -38,6 +38,7 @@ export class ProductoListaComponent implements OnInit {
   errorFormulario = signal<string>('');
   termino = signal<string>('');
   soloStockBajo = signal<boolean>(false);
+  verInactivos = signal<boolean>(false);
 
   readonly puedeGestionar = computed(() => this.authService.tieneRol([
     'ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA', 'ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'ALMACENERO', 'ROLE_ALMACENERO'
@@ -53,9 +54,13 @@ export class ProductoListaComponent implements OnInit {
         (p.marca ?? '').toLowerCase().includes(t) ||
         (p.proveedor ?? '').toLowerCase().includes(t);
       const coincideStock = !this.soloStockBajo() || p.nivel_stock !== 'OK';
-      return coincideTexto && coincideStock;
+      // Los dados de baja solo se ven a pedido
+      const coincideEstado = this.verInactivos() ? p.estado === 'INACTIVO' : p.estado === 'ACTIVO';
+      return coincideTexto && coincideStock && coincideEstado;
     });
   });
+
+  totalInactivos = computed(() => this.productos().filter(p => p.estado === 'INACTIVO').length);
 
   totalStockBajo = computed(() =>
     this.productos().filter(p => p.estado === 'ACTIVO' && p.nivel_stock !== 'OK').length
@@ -145,6 +150,12 @@ export class ProductoListaComponent implements OnInit {
 
   alternarStockBajo(): void {
     this.soloStockBajo.update(v => !v);
+    if (this.soloStockBajo()) this.verInactivos.set(false);
+  }
+
+  alternarInactivos(): void {
+    this.verInactivos.update(v => !v);
+    if (this.verInactivos()) this.soloStockBajo.set(false);
   }
 
   esInvalido(campo: string): boolean {
@@ -224,7 +235,12 @@ export class ProductoListaComponent implements OnInit {
 
   cambiarEstado(p: Producto): void {
     const nuevoEstado = p.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    this.productoService.actualizarProducto(p.id_producto!, { ...p, estado: nuevoEstado }).subscribe({
+    if (nuevoEstado === 'INACTIVO' &&
+      !confirm(`¿Dar de baja "${p.codigo} - ${p.nombre}"?\nNo aparecerá en ventas ni compras, pero se conserva su historial.`)) {
+      return;
+    }
+    this.errorMessage.set('');
+    this.productoService.cambiarEstado(p.id_producto!, nuevoEstado).subscribe({
       next: () => this.cargarProductos(),
       error: (err: HttpErrorResponse) => {
         this.errorMessage.set(extraerMensajeError(err, 'No se pudo cambiar el estado del producto.'));
@@ -233,8 +249,9 @@ export class ProductoListaComponent implements OnInit {
   }
 
   eliminarProducto(p: Producto): void {
-    if (!p.id_producto) return;
-    if (!confirm(`¿Eliminar el producto "${p.codigo} - ${p.nombre}"?`)) return;
+    if (!p.id_producto || p.eliminable === false) return;
+    if (!confirm(`¿Eliminar definitivamente "${p.codigo} - ${p.nombre}"?\nNo tiene movimientos, así que se borrará por completo.`)) return;
+    this.errorMessage.set('');
     this.productoService.eliminarProducto(p.id_producto).subscribe({
       next: () => this.cargarProductos(),
       error: (err: HttpErrorResponse) => {

@@ -9,6 +9,16 @@
     }
   </button>
 
+  <button type="button" class="btn d-flex align-items-center gap-2 shadow-sm"
+    [ngClass]="verInactivos() ? 'btn-secondary' : 'btn-light'" (click)="alternarInactivos()"
+    [attr.aria-pressed]="verInactivos()">
+    <i class="bi" [ngClass]="verInactivos() ? 'bi-eye' : 'bi-archive'" aria-hidden="true"></i>
+    <span>{{ verInactivos() ? 'Ver activos' : 'Ver inactivos' }}</span>
+    @if (totalInactivos() > 0) {
+    <span class="badge bg-secondary rounded-pill">{{ totalInactivos() }}</span>
+    }
+  </button>
+
   @if (puedeGestionar()) {
   <button type="button" class="btn btn-primary ms-auto d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal"
     data-bs-target="#modalRegistroPro" (click)="prepararNuevo()">
@@ -25,7 +35,7 @@
     (alBuscar)="filtrarProductos($event)">
   </app-buscador>
 
-  @if (totalStockBajo() > 0 && !soloStockBajo()) {
+  @if (totalStockBajo() > 0 && !soloStockBajo() && !verInactivos()) {
   <div class="alert alert-warning d-flex align-items-center gap-2 py-2 shadow-sm" role="alert">
     <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
     <span>
@@ -132,12 +142,16 @@
                   <i class="bi" [ngClass]="p.estado === 'ACTIVO' ? 'bi-toggle-off' : 'bi-toggle-on'"></i>
                   <span>{{ p.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}</span>
                 </button>
-                <button type="button"
-                  class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-2 shadow-sm"
-                  (click)="eliminarProducto(p)">
-                  <i class="bi bi-trash3" aria-hidden="true"></i>
-                  <span>Borrar</span>
-                </button>
+                <!-- El span lleva el title porque un botón deshabilitado no muestra tooltip -->
+                <span class="d-inline-block"
+                  [attr.title]="p.eliminable === false ? 'Tiene movimientos en el kardex: no se puede borrar. Desactívelo para conservar su historial.' : 'Borrar definitivamente'">
+                  <button type="button"
+                    class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-2 shadow-sm"
+                    [disabled]="p.eliminable === false" (click)="eliminarProducto(p)">
+                    <i class="bi" [ngClass]="p.eliminable === false ? 'bi-lock' : 'bi-trash3'" aria-hidden="true"></i>
+                    <span>Borrar</span>
+                  </button>
+                </span>
               </div>
             </td>
             }
@@ -151,6 +165,8 @@
                 </div>
                 @if (termino() || soloStockBajo()) {
                 <h6 class="fw-bold text-dark mb-1">Ningún producto coincide con el filtro</h6>
+                } @else if (verInactivos()) {
+                <h6 class="fw-bold text-dark mb-1">No hay productos dados de baja</h6>
                 } @else {
                 <h6 class="fw-bold text-dark mb-1">Aún no hay productos registrados</h6>
                 }

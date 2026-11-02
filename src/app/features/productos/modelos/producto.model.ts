@@ -29,6 +29,9 @@ export interface Producto {
   stock_minimo: number;
   nivel_stock?: NivelStock;
 
+  // Solo lectura: false si tiene movimientos; entonces solo se puede desactivar
+  eliminable?: boolean;
+
   estado: 'ACTIVO' | 'INACTIVO';
   fec_registro?: string | Date;
   fec_modifica?: string | Date;

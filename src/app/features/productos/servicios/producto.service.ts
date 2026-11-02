@@ -33,6 +33,10 @@ export class ProductoService {
     return this.http.put<Producto>(`${this.apiUrl}/${id}`, producto, { withCredentials: true });
   }
 
+  cambiarEstado(id: number, estado: 'ACTIVO' | 'INACTIVO'): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/estado`, null,
+      { params: { estado }, withCredentials: true });
+  }
 
   eliminarProducto(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, { withCredentials: true });
