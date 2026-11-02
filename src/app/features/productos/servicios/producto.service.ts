@@ -25,6 +25,10 @@ export class ProductoService {
     return this.http.get<Producto>(`${this.apiUrl}/${id}`, { withCredentials: true });
   }
 
+  obtenerSiguienteCodigo(): Observable<{ codigo: string }> {
+    return this.http.get<{ codigo: string }>(`${this.apiUrl}/siguiente-codigo`, { withCredentials: true });
+  }
+
   crearProducto(producto: Producto): Observable<Producto> {
     return this.http.post<Producto>(this.apiUrl, producto, { withCredentials: true });
   }

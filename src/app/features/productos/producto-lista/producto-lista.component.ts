@@ -132,18 +132,6 @@ export class ProductoListaComponent implements OnInit {
     });
   }
 
-  siguienteCodigo(): string {
-    const usados = new Set(
-      this.productos().map(p => {
-        const m = String(p.codigo).match(/(\d+)$/);
-        return m ? Number(m[1]) : 0;
-      })
-    );
-    let n = 1;
-    while (usados.has(n)) n++;
-    return 'HER-' + String(n).padStart(3, '0');
-  }
-
   filtrarProductos(termino: string): void {
     this.termino.set(termino);
   }
@@ -167,8 +155,14 @@ export class ProductoListaComponent implements OnInit {
     this.errorFormulario.set('');
     this.productoParaEditar.set(null);
     this.resetearFormulario();
-    this.productoForm.patchValue({ codigo: this.siguienteCodigo() });
     this.productoForm.get('stock_inicial')?.enable();
+    // El backend calcula el código: también cuenta los productos eliminados, que la lista no muestra
+    this.productoService.obtenerSiguienteCodigo().subscribe({
+      next: ({ codigo }) => this.productoForm.patchValue({ codigo }),
+      error: (err: HttpErrorResponse) => {
+        this.errorFormulario.set(extraerMensajeError(err, 'No se pudo generar el código del producto.'));
+      }
+    });
   }
 
   editarProducto(p: Producto): void {
@@ -249,8 +243,11 @@ export class ProductoListaComponent implements OnInit {
   }
 
   eliminarProducto(p: Producto): void {
-    if (!p.id_producto || p.eliminable === false) return;
-    if (!confirm(`¿Eliminar definitivamente "${p.codigo} - ${p.nombre}"?\nNo tiene movimientos, así que se borrará por completo.`)) return;
+    if (!p.id_producto || p.estado !== 'INACTIVO') return;
+    const detalle = p.eliminable === false
+      ? 'Desaparecerá del sistema. Su historial de stock (kardex) se conserva para la auditoría.'
+      : 'No tiene movimientos, así que se borrará por completo.';
+    if (!confirm(`¿Borrar el producto "${p.codigo} - ${p.nombre}"?\n${detalle}\nEsta acción no se puede deshacer.`)) return;
     this.errorMessage.set('');
     this.productoService.eliminarProducto(p.id_producto).subscribe({
       next: () => this.cargarProductos(),

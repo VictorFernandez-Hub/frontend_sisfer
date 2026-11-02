@@ -142,16 +142,15 @@
                   <i class="bi" [ngClass]="p.estado === 'ACTIVO' ? 'bi-toggle-off' : 'bi-toggle-on'"></i>
                   <span>{{ p.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}</span>
                 </button>
-                <!-- El span lleva el title porque un botón deshabilitado no muestra tooltip -->
-                <span class="d-inline-block"
-                  [attr.title]="p.eliminable === false ? 'Tiene movimientos en el kardex: no se puede borrar. Desactívelo para conservar su historial.' : 'Borrar definitivamente'">
-                  <button type="button"
-                    class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-2 shadow-sm"
-                    [disabled]="p.eliminable === false" (click)="eliminarProducto(p)">
-                    <i class="bi" [ngClass]="p.eliminable === false ? 'bi-lock' : 'bi-trash3'" aria-hidden="true"></i>
-                    <span>Borrar</span>
-                  </button>
-                </span>
+                <!-- Borrar solo existe en "Ver inactivos": primero se desactiva, luego se borra -->
+                @if (p.estado === 'INACTIVO') {
+                <button type="button"
+                  class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-2 shadow-sm"
+                  title="Borrar producto" (click)="eliminarProducto(p)">
+                  <i class="bi bi-trash3" aria-hidden="true"></i>
+                  <span>Borrar</span>
+                </button>
+                }
               </div>
             </td>
             }
