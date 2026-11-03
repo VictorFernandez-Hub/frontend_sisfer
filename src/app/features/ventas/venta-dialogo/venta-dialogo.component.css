@@ -1,0 +1,48 @@
+/* Cubre toda la ventana de la venta sin cambiar su tamaño */
+.dialogo-capa {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: inherit;
+}
+
+/* Si la venta es larga, el diálogo sigue a la vista al desplazarse */
+.dialogo {
+  position: sticky;
+  top: 2rem;
+  width: 100%;
+  max-width: 28rem;
+  margin-top: 3rem;
+}
+
+.dialogo-filas {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 1rem;
+}
+
+.dialogo-filas dt {
+  font-weight: 400;
+  color: #6c757d;
+}
+
+.dialogo-filas dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* La nota siempre ocupa su lugar: el error no mueve los botones */
+.dialogo-nota {
+  display: flex;
+  justify-content: space-between;
+  min-height: 1.5rem;
+  padding-top: 0.25rem;
+  color: #6c757d;
+}

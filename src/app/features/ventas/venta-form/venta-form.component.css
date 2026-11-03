@@ -1,0 +1,169 @@
+/* El encabezado, el cuerpo y el pie quedan como hijos directos de la ventana */
+:host {
+  display: contents;
+}
+
+/* Espacio fijo para avisos cortos: aparecer o desaparecer no cambia la altura */
+.nota-fija {
+  min-height: 1.35rem;
+  padding-top: 0.15rem;
+  font-size: 0.8rem;
+  line-height: 1.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linea-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 7.5rem 8.5rem 6rem 2.5rem;
+  column-gap: 0.5rem;
+  align-items: start;
+}
+
+.linea-cabecera {
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.etiqueta-movil {
+  display: none;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+/* min-width: 0 evita que un nombre largo ensanche la columna */
+.linea-producto,
+.linea-cantidad,
+.linea-precio {
+  min-width: 0;
+}
+
+.unidad {
+  justify-content: center;
+  width: 2.75rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.importe {
+  height: 38px;
+  line-height: 38px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Sin flechas: en un campo angosto tapan el número */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* El panel de cobro sigue a la vista cuando hay muchos productos */
+.panel-cobro {
+  position: sticky;
+  top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+}
+
+.vuelto {
+  height: 38px;
+  line-height: 38px;
+  font-size: 1.25rem;
+}
+
+.totales {
+  padding-top: 0.75rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.total-cobrar {
+  margin-top: 0.25rem;
+  font-size: 1.35rem;
+}
+
+/* El pie queda visible aunque la venta sea larga */
+.pie-venta {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #fff;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+.pie-mensaje {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* En pantallas angostas cada línea se apila; las etiquetas pasan a cada campo */
+@media (max-width: 767.98px) {
+  .pie-venta {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  .pie-mensaje {
+    flex-basis: 100%;
+    min-height: 2.5rem;
+    font-size: 0.8rem;
+    line-height: 1.2rem;
+  }
+
+  .pie-venta .btn {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .importe {
+    text-align: left;
+  }
+
+  .linea-grid.linea {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    row-gap: 0.25rem;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+  }
+
+  .linea-producto {
+    grid-column: 1 / -1;
+  }
+
+  .etiqueta-movil {
+    display: block;
+  }
+
+  .linea-quitar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+}

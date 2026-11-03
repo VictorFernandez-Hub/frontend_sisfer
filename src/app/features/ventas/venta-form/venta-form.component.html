@@ -1,0 +1,215 @@
+<div class="modal-header bg-light border-bottom py-3">
+  <h5 class="modal-title fw-bold text-dark" id="modalVentaTitulo">
+    <i class="bi bi-cart-plus text-warning me-2" aria-hidden="true"></i>{{ titulo }}
+  </h5>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="guardando()" (click)="cancelar.emit()"></button>
+</div>
+
+<!-- Al corregir cualquier dato se quita el error anterior -->
+<div class="modal-body p-4" (input)="error.set('')" (change)="error.set('')">
+  <div class="row g-4">
+    <!-- ===================== CLIENTE Y PRODUCTOS ===================== -->
+    <div class="col-12 col-xl-8">
+      <label for="venCliente" class="form-label small fw-semibold mb-1">Cliente *</label>
+      <app-selector-busqueda idCampo="venCliente" placeholder="Buscar por nombre o documento..."
+        [opciones]="opcionesCliente()" [valor]="idCliente" [invalido]="mostrarErrores() && !idCliente"
+        (valorChange)="alElegirCliente($event)"></app-selector-busqueda>
+      <div class="nota-fija mb-3">
+        @if (faltaIdentificarComprador()) {
+        <span class="text-danger">Boleta mayor a S/ 700.00: elija al cliente con sus datos.</span>
+        } @else {
+        <span class="text-secondary">¿No está en la lista? Regístrelo en el módulo Clientes.</span>
+        }
+      </div>
+
+      <div class="linea-grid linea-cabecera d-none d-md-grid" aria-hidden="true">
+        <span>Producto *</span>
+        <span>Cantidad *</span>
+        <span>Precio unit. (S/)</span>
+        <span class="text-end">Importe (S/)</span>
+        <span></span>
+      </div>
+
+      @for (l of lineas; track l.clave; let i = $index) {
+      <div class="linea-grid linea">
+        <div class="linea-producto">
+          <span class="etiqueta-movil">Producto *</span>
+          <app-selector-busqueda [etiqueta]="'Producto de la línea ' + (i + 1)"
+            placeholder="Buscar por código o nombre..." textoBloqueado="Ya está en la venta"
+            [opciones]="opcionesProducto()" [bloqueados]="ocupados()" [valor]="l.idProducto"
+            [invalido]="(mostrarErrores() && !l.idProducto) || noDisponible(l)"
+            (valorChange)="alElegirProducto(l, $event); campoCantidad.focus(); campoCantidad.select()">
+          </app-selector-busqueda>
+          <div class="nota-fija">
+            @if (noDisponible(l)) {
+            <span class="text-danger">Este producto ya no está disponible</span>
+            } @else if (excedeStock(l)) {
+            <span class="text-danger">Solo hay {{ stockDe(l) | number:'1.0-3' }} {{ unidadDe(l) }} disponibles</span>
+            } @else if (quedaBajoMinimo(l)) {
+            <span class="text-warning-emphasis">Quedarán {{ stockDe(l) - (l.cantidad ?? 0) | number:'1.0-3' }}: toca reponer</span>
+            } @else if (l.idProducto) {
+            <span class="text-secondary">Stock: {{ stockDe(l) | number:'1.0-3' }} {{ unidadDe(l) }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="linea-cantidad">
+          <span class="etiqueta-movil">Cantidad *</span>
+          <div class="input-group">
+            <input #campoCantidad type="number" class="form-control text-end px-2"
+              [min]="cantidadEntera(l) ? 1 : 0.001" [step]="cantidadEntera(l) ? 1 : 0.1"
+              [class.is-invalid]="cantidadInvalida(l)" [(ngModel)]="l.cantidad"
+              [attr.aria-label]="'Cantidad de la línea ' + (i + 1)">
+            <span class="input-group-text unidad">{{ unidadDe(l) || '-' }}</span>
+          </div>
+          <div class="nota-fija"></div>
+        </div>
+
+        <div class="linea-precio">
+          <span class="etiqueta-movil">Precio unit. (S/)</span>
+          <div class="input-group">
+            @if (l.precioAbierto) {
+            <input type="number" min="0.01" step="0.01" class="form-control text-end px-2"
+              [(ngModel)]="l.precioUnit" [attr.aria-label]="'Precio de la línea ' + (i + 1)">
+            } @else {
+            <input type="text" class="form-control text-end px-2 bg-light" readonly tabindex="-1"
+              [value]="l.precioUnit | number:'1.2-2'" [attr.aria-label]="'Precio de la línea ' + (i + 1)"
+              [title]="esAdminNegocio() ? 'Use el candado para cambiar el precio' : 'Precio de lista. Solo el administrador del negocio puede cambiarlo'">
+            }
+            @if (esAdminNegocio()) {
+            <button type="button" class="btn btn-outline-secondary px-2" [disabled]="!l.idProducto"
+              [attr.aria-pressed]="l.precioAbierto"
+              [attr.aria-label]="l.precioAbierto ? 'Bloquear y recuperar el precio' : 'Desbloquear el precio'"
+              [title]="l.precioAbierto ? 'Bloquear y recuperar el precio' : 'Desbloquear el precio'"
+              (click)="alternarPrecio(l)">
+              <i class="bi" [ngClass]="l.precioAbierto ? 'bi-unlock' : 'bi-lock'" aria-hidden="true"></i>
+            </button>
+            }
+          </div>
+          <div class="nota-fija">
+            @if (esAdminNegocio() && bajoCosto(l)) {
+            <span class="text-warning-emphasis">Bajo el costo</span>
+            } @else if (precioCambiado(l)) {
+            <span class="text-secondary">Antes: {{ l.precioBase | number:'1.2-2' }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="linea-importe">
+          <span class="etiqueta-movil">Importe (S/)</span>
+          <div class="importe fw-semibold">{{ totalLinea(l) | number:'1.2-2' }}</div>
+        </div>
+
+        <div class="linea-quitar">
+          <button type="button" class="btn btn-outline-danger px-2" [disabled]="lineas.length === 1"
+            [attr.aria-label]="'Quitar la línea ' + (i + 1)" title="Quitar producto" (click)="quitarLinea(i)">
+            <i class="bi bi-trash" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      }
+
+      <button type="button" class="btn btn-sm btn-outline-secondary mt-1" (click)="agregarLinea()">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar producto
+      </button>
+    </div>
+
+    <!-- ===================== COBRO Y TOTALES ===================== -->
+    <div class="col-12 col-xl-4">
+      <div class="panel-cobro">
+        <div class="row g-2">
+          <div class="col-6 col-xl-12">
+            <label for="venMetodo" class="form-label small fw-semibold mb-1">Medio de pago *</label>
+            <select id="venMetodo" class="form-select" [class.is-invalid]="mostrarErrores() && !idMetodo" [(ngModel)]="idMetodo">
+              <option [ngValue]="null">Seleccione</option>
+              @for (m of metodos(); track m.id) {
+              <option [ngValue]="m.id" [disabled]="m.codigo === 'CREDITO' && esClienteVarios()">{{ m.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-6 col-xl-12">
+            <label for="venComp" class="form-label small fw-semibold mb-1">Comprobante *</label>
+            <select id="venComp" class="form-select" [(ngModel)]="idTipoComp">
+              @for (t of tiposComp(); track t.id) {
+              <option [ngValue]="t.id" [disabled]="t.codigo === 'FAC' && clienteSeleccionado()?.tipo_doc !== 'RUC'">
+                {{ t.nombre }}
+              </option>
+              }
+            </select>
+            <div class="nota-fija text-secondary">La factura requiere un cliente con RUC.</div>
+          </div>
+        </div>
+
+        <!-- Siempre ocupa su lugar: con otros medios de pago solo se desactiva -->
+        <div class="row g-2 mt-1 align-items-start">
+          <div class="col-7">
+            <label for="venRecibido" class="form-label small fw-semibold mb-1">Recibido (S/)</label>
+            <div class="input-group">
+              <input id="venRecibido" type="number" min="0" step="0.10" class="form-control text-end px-2"
+                [class.is-invalid]="recibidoInsuficiente()" [disabled]="!pagoEnEfectivo()" [(ngModel)]="recibido">
+              <button type="button" class="btn btn-outline-secondary px-2" [disabled]="!pagoEnEfectivo()"
+                title="Recibió el monto exacto" (click)="montoExacto()">Exacto</button>
+            </div>
+          </div>
+          <div class="col-5 text-end">
+            <span class="form-label small fw-semibold mb-1 d-block">Vuelto (S/)</span>
+            <div class="vuelto fw-bold" [class.text-danger]="recibidoInsuficiente()">
+              {{ pagoEnEfectivo() && recibido !== null ? (vuelto() | number:'1.2-2') : '-' }}
+            </div>
+          </div>
+        </div>
+
+        <label for="venObs" class="form-label small fw-semibold mt-3 mb-1">
+          Observación {{ hayCambioDePrecio() ? '*' : '' }}
+        </label>
+        <textarea id="venObs" rows="2" maxlength="300" class="form-control"
+          [class.is-invalid]="hayCambioDePrecio() && mostrarErrores() && !observacion.trim()" [(ngModel)]="observacion"
+          [placeholder]="esAdminNegocio() ? 'Si cambia un precio, indique aquí el motivo' : 'Opcional'"></textarea>
+
+        <div class="totales mt-3">
+          <div class="d-flex justify-content-between"><span class="text-secondary">Op. gravada</span>
+            <span>S/ {{ subtotal() | number:'1.2-2' }}</span></div>
+          <div class="d-flex justify-content-between"><span class="text-secondary">IGV (18%)</span>
+            <span>S/ {{ igv() | number:'1.2-2' }}</span></div>
+          <div class="d-flex justify-content-between align-items-baseline fw-bold total-cobrar">
+            <span>Total a cobrar</span>
+            <span>S/ {{ total() | number:'1.2-2' }}</span>
+          </div>
+          <div class="small text-secondary text-end">Los precios ya incluyen IGV</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- El lugar del mensaje siempre está reservado: un error no mueve los botones -->
+<div class="modal-footer pie-venta">
+  <div class="pie-mensaje" aria-live="polite">
+    @if (error()) {
+    <span class="text-danger d-flex align-items-start gap-2">
+      <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+      <span>{{ error() }}</span>
+    </span>
+    }
+  </div>
+  <div class="d-flex flex-wrap justify-content-end gap-2">
+    <button type="button" class="btn btn-light border" [disabled]="guardando()" (click)="cancelar.emit()">Cancelar</button>
+    <button type="button" class="btn btn-outline-primary" [disabled]="guardando()"
+      title="Guarda una proforma: el stock todavía no cambia" (click)="guardarBorrador()">
+      Guardar borrador
+    </button>
+    <button type="button" class="btn btn-success d-flex align-items-center gap-2" [disabled]="guardando()"
+      title="Descuenta el stock y emite el comprobante" (click)="pedirCobro()">
+      @if (guardando()) {
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      } @else {
+      <i class="bi bi-cash-coin" aria-hidden="true"></i>
+      }
+      Cobrar
+    </button>
+  </div>
+</div>
+
+@if (dialogo(); as d) {
+<app-venta-dialogo [datos]="d" (aceptar)="cobrar()" (cancelar)="dialogo.set(null)"></app-venta-dialogo>
+}

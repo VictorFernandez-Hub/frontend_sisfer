@@ -1,0 +1,35 @@
+<div class="dialogo-capa" (keydown.escape)="cancelar.emit()">
+  <div class="dialogo card border-0 shadow-lg" role="alertdialog" aria-modal="true" aria-labelledby="dialogoTitulo">
+    <div class="card-body p-4">
+      <h5 id="dialogoTitulo" class="fw-bold mb-2">{{ datos().titulo }}</h5>
+      <p class="text-secondary mb-3">{{ datos().mensaje }}</p>
+
+      @if (datos().filas; as filas) {
+      <dl class="dialogo-filas mb-3">
+        @for (f of filas; track f.etiqueta) {
+        <dt>{{ f.etiqueta }}</dt>
+        <dd>{{ f.valor }}</dd>
+        }
+      </dl>
+      }
+
+      @if (datos().pedirMotivo) {
+      <label for="dialogoMotivo" class="form-label small mb-1">Motivo de la anulación *</label>
+      <textarea #motivoCampo id="dialogoMotivo" rows="2" class="form-control" [maxlength]="maximo"
+        [class.is-invalid]="intento() && !motivoValido()" [ngModel]="motivo()"
+        (ngModelChange)="motivo.set($event)"></textarea>
+      <div class="dialogo-nota small" [class.text-danger]="intento() && !motivoValido()">
+        <span>Mínimo 5 caracteres.</span>
+        <span class="text-secondary">{{ motivo().length }}/{{ maximo }}</span>
+      </div>
+      }
+
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button type="button" class="btn btn-light border" (click)="cancelar.emit()">Volver</button>
+        <button #botonAceptar type="button" class="btn" [class]="datos().claseBoton" (click)="alAceptar()">
+          {{ datos().textoBoton }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

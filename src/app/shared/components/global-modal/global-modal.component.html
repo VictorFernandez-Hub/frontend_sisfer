@@ -1,6 +1,5 @@
-<app-global-modal></app-global-modal>
 @if (notificationService.visible()) {
-  <div class="position-fixed bottom-0 end-0 p-4" style="z-index: 2000; pointer-events: none;">
+  <div class="position-fixed bottom-0 end-0 p-4" role="status" style="z-index: 2000; pointer-events: none;">
     <div class="toast show border-0 shadow-lg overflow-hidden animate-slide-up"
       [ngClass]="notificationService.tipo() === 'success' ? 'bg-success text-white' : 'bg-danger text-white'"
       style="pointer-events: auto; min-width: 320px; border-radius: 12px;">
@@ -10,7 +9,8 @@
         <div class="d-flex align-items-center justify-content-center bg-white bg-opacity-25 rounded-circle p-2"
           style="width: 38px; height: 38px;">
           <i class="bi fs-5"
-            [ngClass]="notificationService.tipo() === 'success' ? 'bi-check-circle-fill' : 'bi-trash-fill'"></i>
+            [ngClass]="notificationService.tipo() === 'success' ? 'bi-check-circle-fill' : (notificationService.tipo() === 'delete' ? 'bi-trash-fill' : 'bi-exclamation-triangle-fill')"
+            aria-hidden="true"></i>
         </div>
 
         <!-- Mensaje -->

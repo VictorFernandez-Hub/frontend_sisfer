@@ -15,6 +15,11 @@ export class ClienteService {
     return this.http.get<Cliente[]>(this.apiUrl, { withCredentials: true });
   }
 
+  // Solo los clientes ACTIVOS se pueden usar en una venta
+  obtenerClientesActivos(): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(`${this.apiUrl}/activos`, { withCredentials: true });
+  }
+
   obtenerClientePorId(id: number): Observable<Cliente> {
     return this.http.get<Cliente>(`${this.apiUrl}/${id}`, { withCredentials: true });
   }

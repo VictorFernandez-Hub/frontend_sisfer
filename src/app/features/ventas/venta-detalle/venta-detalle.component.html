@@ -1,0 +1,123 @@
+@let d = venta();
+
+<div class="modal-header bg-light border-bottom py-3">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <h5 class="modal-title fw-bold text-dark" id="modalVentaTitulo">
+      <i class="bi bi-receipt text-warning me-2" aria-hidden="true"></i>Venta {{ d.numero }}
+    </h5>
+    <span class="badge py-1 px-2" [ngClass]="claseEstado(d.estado)">{{ d.estado }}</span>
+    @if (d.comprobante) {
+    <span class="badge py-1 px-2 bg-white text-dark border">
+      {{ d.comprobante.nombre }} {{ d.comprobante.numeroCompleto }}
+      @if (d.comprobante.estado === 'ANULADO') { (anulado) }
+    </span>
+    }
+  </div>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="guardando()" (click)="cerrar.emit()"></button>
+</div>
+
+<div class="modal-body p-4">
+  <dl class="datos-venta">
+    <div><dt>Cliente</dt><dd>{{ d.cliente }}</dd></div>
+    <div><dt>Documento</dt><dd>{{ d.tipoDocCliente }} {{ d.numDocCliente }}</dd></div>
+    <div><dt>Fecha</dt><dd>{{ d.fecVenta | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+    <div><dt>Pago</dt><dd>{{ d.metodo }}</dd></div>
+    <div><dt>Registró</dt><dd>{{ d.usuario }}</dd></div>
+    @if (d.observacion) {
+    <div class="dato-ancho"><dt>Observación</dt><dd>{{ d.observacion }}</dd></div>
+    }
+  </dl>
+
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-3">
+      <thead class="table-light text-uppercase fs-7 text-secondary">
+        <tr>
+          <th scope="col">Producto</th>
+          <th scope="col">Unidad</th>
+          <th scope="col" class="text-end">Cantidad</th>
+          <th scope="col" class="text-end">Precio unit.</th>
+          <th scope="col" class="text-end">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of d.lineas; track l.idProducto) {
+        <tr>
+          <td>
+            <div class="fw-semibold">{{ l.producto }}</div>
+            <div class="font-monospace small text-secondary">{{ l.codigo }}</div>
+          </td>
+          <td>{{ l.unidad }}</td>
+          <td class="text-end">{{ l.cantidad | number:'1.0-3' }}</td>
+          <td class="text-end">S/ {{ l.precioUnit | number:'1.2-2' }}</td>
+          <td class="text-end fw-semibold">S/ {{ l.totLinea | number:'1.2-2' }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="totales-detalle ms-auto">
+    <div class="d-flex justify-content-between"><span class="text-secondary">Op. gravada</span>
+      <span>S/ {{ d.totSubtotal | number:'1.2-2' }}</span></div>
+    <div class="d-flex justify-content-between"><span class="text-secondary">IGV</span>
+      <span>S/ {{ d.totIgv | number:'1.2-2' }}</span></div>
+    <div class="d-flex justify-content-between fw-bold fs-5"><span>Total</span>
+      <span>S/ {{ d.totTotal | number:'1.2-2' }}</span></div>
+  </div>
+</div>
+
+<div class="modal-footer pie-detalle">
+  <div class="pie-mensaje" aria-live="polite">
+    @if (error()) {
+    <span class="text-danger d-flex align-items-start gap-2">
+      <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+      <span>{{ error() }}</span>
+    </span>
+    } @else if (d.estado === 'CONFIRMADA' && puedeRegistrar() && !esAdminNegocio()) {
+    <span class="text-secondary">Para anular una venta confirmada comuníquese con el administrador del negocio.</span>
+    }
+  </div>
+  <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+    @if (puedeAnular()) {
+    <button type="button" class="btn btn-outline-danger" [disabled]="guardando()" (click)="pedirAnulacion()">
+      Anular
+    </button>
+    }
+    @if (tienePdf()) {
+    <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2" [disabled]="descargando()"
+      (click)="descargarPdf()">
+      @if (descargando()) {
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      } @else {
+      <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+      }
+      {{ d.comprobante ? 'Descargar comprobante' : 'Descargar proforma' }}
+    </button>
+    }
+    @if (d.estado === 'BORRADOR' && puedeRegistrar()) {
+    <button type="button" class="btn btn-outline-primary" [disabled]="guardando()" (click)="editar.emit(d)">
+      Editar
+    </button>
+    <select class="form-select w-auto" aria-label="Tipo de comprobante" [(ngModel)]="idTipoComp">
+      @for (t of tiposComp(); track t.id) {
+      <option [ngValue]="t.id" [disabled]="t.codigo === 'FAC' && d.tipoDocCliente !== 'RUC'">{{ t.nombre }}</option>
+      }
+    </select>
+    <button type="button" class="btn btn-success d-flex align-items-center gap-2" [disabled]="guardando()"
+      (click)="pedirConfirmacion()">
+      @if (guardando()) {
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      } @else {
+      <i class="bi bi-cash-coin" aria-hidden="true"></i>
+      }
+      Cobrar
+    </button>
+    } @else {
+    <button type="button" class="btn btn-light border" (click)="cerrar.emit()">Cerrar</button>
+    }
+  </div>
+</div>
+
+@if (dialogo(); as dg) {
+<app-venta-dialogo [datos]="dg" (aceptar)="alAceptarDialogo($event)" (cancelar)="dialogo.set(null)"></app-venta-dialogo>
+}

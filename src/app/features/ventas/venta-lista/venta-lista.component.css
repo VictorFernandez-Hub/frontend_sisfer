@@ -1,0 +1,77 @@
+.sin-acceso {
+  max-width: 32rem;
+}
+
+.tarjeta-resumen {
+  background: #fff;
+}
+
+/* Al pasar el mouse o elegirla cambia el borde: la tarjeta no se mueve */
+.tarjeta-filtro {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.tarjeta-filtro:hover {
+  box-shadow: inset 0 0 0 1px #ffa500 !important;
+}
+
+.tarjeta-filtro.activa {
+  box-shadow: inset 0 0 0 2px #ffa500 !important;
+}
+
+.tarjeta-filtro:focus-visible {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+/* Un alto fijo: aparecer el primer cobro no empuja el resto */
+.caja {
+  min-height: 4.75rem;
+}
+
+.caja-titulo {
+  margin-bottom: 0.25rem;
+}
+
+/* Bootstrap la deja en 500 px en tablets: no alcanza para las columnas de una línea */
+@media (min-width: 576px) {
+  .modal-dialog {
+    max-width: min(71.25rem, calc(100vw - 2rem));
+  }
+}
+
+.tabla-contenedor {
+  min-height: 18rem;
+  background: #fff;
+}
+
+/* 65.5rem de columnas fijas más 13rem para el cliente, que toma el ancho que sobre */
+#tablaVentas {
+  table-layout: fixed;
+  min-width: 78.5rem;
+}
+
+.col-numero { width: 6.5rem; }
+.col-fecha { width: 9.5rem; }
+.col-comprobante { width: 9.5rem; }
+.col-pago { width: 7.5rem; }
+.col-total { width: 7rem; }
+.col-estado { width: 8rem; }
+.col-usuario { width: 7.5rem; }
+.col-acciones { width: 10rem; }
+
+.girando {
+  display: inline-block;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .girando {
+    animation: none;
+  }
+}

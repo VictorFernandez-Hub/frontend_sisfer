@@ -1,0 +1,27 @@
+<div class="selector">
+  <input #campo type="text" class="form-control selector-campo" role="combobox" autocomplete="off"
+    aria-autocomplete="list" [id]="idCampo() || null" [class.is-invalid]="invalido()"
+    [attr.aria-label]="etiqueta() || null" [attr.aria-expanded]="abierta()" [attr.aria-controls]="idLista"
+    [attr.aria-activedescendant]="abierta() && activa() >= 0 ? idLista + '-' + activa() : null"
+    [placeholder]="placeholder()" [value]="textoVisible()" (focus)="alEnfocar($event)" (click)="alHacerClic()" (input)="alEscribir($event)"
+    (keydown)="alTeclear($event)" (blur)="alSalir()">
+  @if (!invalido()) {
+  <i class="bi bi-chevron-down selector-icono" aria-hidden="true"></i>
+  }
+
+  @if (abierta()) {
+  <ul class="selector-lista" role="listbox" [class.arriba]="haciaArriba()" [id]="idLista"
+    (mousedown)="$event.preventDefault()">
+    @for (o of filtradas(); track o.id; let i = $index) {
+    <li role="option" class="selector-opcion" [id]="idLista + '-' + i" [class.activa]="i === activa()"
+      [class.seleccionada]="o.id === valor()" [class.deshabilitada]="deshabilitada(o)"
+      [attr.aria-selected]="o.id === valor()" [attr.aria-disabled]="deshabilitada(o)" (click)="elegir(o)">
+      <span class="selector-texto">{{ o.texto }}</span>
+      <span class="selector-detalle">{{ estaBloqueada(o) ? textoBloqueado() : o.detalle }}</span>
+    </li>
+    } @empty {
+    <li class="selector-vacio">Sin resultados</li>
+    }
+  </ul>
+  }
+</div>
