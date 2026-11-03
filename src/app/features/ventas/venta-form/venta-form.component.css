@@ -70,6 +70,11 @@ input[type='number'] {
   appearance: textfield;
 }
 
+/* En un campo angosto el icono de error tapa el número: basta con el borde rojo */
+input.form-control.text-end.is-invalid {
+  background-image: none;
+}
+
 /* El panel de cobro sigue a la vista cuando hay muchos productos */
 .panel-cobro {
   position: sticky;
