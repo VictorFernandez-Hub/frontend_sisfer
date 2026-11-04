@@ -44,6 +44,16 @@ export class ProductoListaComponent implements OnInit {
     'ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA', 'ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'ALMACENERO', 'ROLE_ALMACENERO'
   ]));
 
+  // Regla del negocio (igual que el backend): el precio de venta solo lo fija el administrador
+  readonly puedeCambiarPrecio = computed(() => this.authService.tieneRol([
+    'ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA', 'ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO'
+  ]));
+
+  // Productos activos que Ventas no puede vender porque no tienen precio
+  totalSinPrecio = computed(() =>
+    this.productos().filter(p => p.estado === 'ACTIVO' && !(Number(p.precio_venta) > 0)).length
+  );
+
   productosFiltrados = computed(() => {
     const t = this.termino().trim().toLowerCase();
     return this.productos().filter(p => {
@@ -91,8 +101,29 @@ export class ProductoListaComponent implements OnInit {
       id_proveedor: [null, [Validators.required]],
       stock_inicial: [0, [Validators.required, Validators.min(0)]],
       stock_minimo: [0, [Validators.required, Validators.min(0)]],
+      // Precio al público en soles (incluye IGV). Es el que usa Ventas
+      precio_venta: [0, [Validators.required, Validators.min(0), Validators.max(9999999999.99),
+        Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       estado: ['ACTIVO', [Validators.required]]
     });
+    if (!this.puedeCambiarPrecio()) this.productoForm.get('precio_venta')?.disable();
+  }
+
+  /** Último costo conocido del producto (lo fija la compra). Solo informativo en el formulario. */
+  precioCompraActual(): number {
+    return Number(this.productoParaEditar()?.precio_compra ?? 0);
+  }
+
+  /** El precio de venta no puede quedar por debajo del costo (el backend también lo valida). */
+  precioBajoCosto(): boolean {
+    const venta = Number(this.productoForm?.get('precio_venta')?.value ?? 0);
+    const costo = this.precioCompraActual();
+    return costo > 0 && venta < costo;
+  }
+
+  /** Sin precio, Ventas rechaza el producto. */
+  sinPrecio(p: Producto): boolean {
+    return !(Number(p.precio_venta) > 0);
   }
 
   private cargarCatalogos(): void {
@@ -179,6 +210,7 @@ export class ProductoListaComponent implements OnInit {
       id_proveedor: p.id_proveedor ?? null,
       stock_inicial: p.stock_actual ?? 0,
       stock_minimo: p.stock_minimo,
+      precio_venta: Number(p.precio_venta ?? 0),
       estado: p.estado
     });
     // Al editar, el stock solo cambia con compras, ventas o ajustes
@@ -186,7 +218,7 @@ export class ProductoListaComponent implements OnInit {
   }
 
   guardarProducto(): void {
-    if (this.productoForm.invalid) {
+    if (this.productoForm.invalid || this.precioBajoCosto()) {
       this.productoForm.markAllAsTouched();
       return;
     }
@@ -201,8 +233,15 @@ export class ProductoListaComponent implements OnInit {
       id_unidad: Number(v.id_unidad),
       id_proveedor: Number(v.id_proveedor),
       stock_minimo: Number(v.stock_minimo)
-      // Sin precios: al crear quedan en 0 y al editar el backend conserva los actuales
     };
+    // El precio de compra nunca se envía: lo fija la compra y el backend conserva el actual.
+    delete producto.precio_compra;
+    // El precio de venta solo lo envía quien puede cambiarlo; si no, el backend conserva el actual
+    if (this.puedeCambiarPrecio()) {
+      producto.precio_venta = Number(v.precio_venta);
+    } else {
+      delete producto.precio_venta;
+    }
 
     const editando = this.productoParaEditar();
     if (editando) {
@@ -254,6 +293,7 @@ export class ProductoListaComponent implements OnInit {
       id_proveedor: null,
       stock_inicial: this.productoParaEditar()?.stock_actual ?? 0,
       stock_minimo: 0,
+      precio_venta: Number(this.productoParaEditar()?.precio_venta ?? 0),
       estado: 'ACTIVO'
     });
   }
