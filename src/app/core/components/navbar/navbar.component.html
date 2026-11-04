@@ -36,11 +36,14 @@
           </li>
         }
 
+        <!-- COMPRAS oculto por ahora: la pantalla todavía no está en main.
+             Para volver a mostrarlo, restaurar este bloque:
         @if (tieneRol(ROLES_COMPRAS)) {
           <li class="nav-item">
             <a class="nav-link" routerLink="/compras" routerLinkActive="active">COMPRAS</a>
           </li>
         }
+        -->
 
         @if (tieneRol(ROLES_PROVEEDORES) || tieneModulo('PROVEEDORES')) {
           <li class="nav-item">
