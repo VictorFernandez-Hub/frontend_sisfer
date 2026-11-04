@@ -30,20 +30,29 @@
           </li>
         }
 
-        @if (tieneRol(ROLES_VENTAS)) {
+        @if (tieneRol(ROLES_VENTAS) || tieneModulo('VENTAS')) {
           <li class="nav-item">
             <a class="nav-link" routerLink="/ventas" routerLinkActive="active">VENTAS</a>
           </li>
         }
 
-        <!-- COMPRAS oculto por ahora: la pantalla todavía no está en main.
-             Para volver a mostrarlo, restaurar este bloque:
-        @if (tieneRol(ROLES_COMPRAS)) {
+        @if (tieneRol(ROLES_INVENTARIO) || tieneModulo('INVENTARIO')) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/inventario" routerLinkActive="active">INVENTARIO</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_KARDEX) || tieneModulo('KARDEX')) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/kardex" routerLinkActive="active">KARDEX</a>
+          </li>
+        }
+
+        @if (tieneRol(ROLES_COMPRAS) || tieneModulo('COMPRAS')) {
           <li class="nav-item">
             <a class="nav-link" routerLink="/compras" routerLinkActive="active">COMPRAS</a>
           </li>
         }
-        -->
 
         @if (tieneRol(ROLES_PROVEEDORES) || tieneModulo('PROVEEDORES')) {
           <li class="nav-item">
@@ -63,13 +72,13 @@
           </li>
         }
 
-        @if (tieneRol(ROLES_USUARIOS)) {
+        @if (tieneRol(ROLES_USUARIOS) || tieneModulo('ROLES')) {
           <li class="nav-item">
             <a class="nav-link" routerLink="/roles" routerLinkActive="active">ROLES</a>
           </li>
         }
 
-        @if (tieneRol(ROLES_USUARIOS)) {
+        @if (tieneRol(ROLES_USUARIOS) || tieneModulo('BITACORA')) {
           <li class="nav-item">
             <a class="nav-link" routerLink="/bitacora" routerLinkActive="active">BITÁCORA</a>
           </li>

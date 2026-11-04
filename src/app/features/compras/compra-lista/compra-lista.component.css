@@ -1,0 +1,8 @@
+/* Evita que nombres largos estiren la tabla */
+.celda-proveedor {
+  max-width: 260px;
+}
+
+.select-producto {
+  min-width: 260px;
+}

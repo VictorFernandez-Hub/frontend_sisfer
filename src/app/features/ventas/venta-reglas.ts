@@ -13,7 +13,8 @@ export const TOPE_BOLETA_SIN_IDENTIFICAR = 700;
 // Estas unidades no se parten. Metro, kilo y litro sí admiten decimales
 export const UNIDADES_ENTERAS = ['UND', 'PQT', 'CJ'];
 
-export const ROLES_REGISTRAR = ['ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'VENDEDOR', 'ROLE_VENDEDOR'];
+// MOD_VENTAS: rol con el módulo Ventas asignado en "Roles y accesos"
+export const ROLES_REGISTRAR = ['ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'VENDEDOR', 'ROLE_VENDEDOR', 'MOD_VENTAS'];
 export const ROLES_CONSULTAR = [...ROLES_REGISTRAR, 'GERENTE', 'ROLE_GERENTE'];
 export const ROLES_ADMIN_NEGOCIO = ['ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO'];
 

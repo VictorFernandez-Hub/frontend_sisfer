@@ -41,7 +41,7 @@ export class ProductoListaComponent implements OnInit {
   verInactivos = signal<boolean>(false);
 
   readonly puedeGestionar = computed(() => this.authService.tieneRol([
-    'ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA', 'ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'ALMACENERO', 'ROLE_ALMACENERO'
+    'ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA', 'ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'ALMACENERO', 'ROLE_ALMACENERO', 'MOD_PRODUCTOS'
   ]));
 
   // Regla del negocio (igual que el backend): el precio de venta solo lo fija el administrador
