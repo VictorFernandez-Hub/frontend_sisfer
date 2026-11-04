@@ -17,6 +17,7 @@ export class LoginComponent implements OnInit {
   hideLoginPassword = signal(true);
   hideRecoveryPassword = signal(true);
   mostrarReglasRecuperar = signal(false);
+  enviandoCodigo = signal(false);
   private reglasTimerRecuperar: any;
 
   errorMessage = signal<string>('');
@@ -133,10 +134,13 @@ export class LoginComponent implements OnInit {
     this.mensajeRecuperar.set('Ingrese un correo válido, con @ y punto.');
     return;
   }
-  if (this.segundosRestantes() > 0) return;
+  if (this.segundosRestantes() > 0 || this.enviandoCodigo()) return;
 
+  this.enviandoCodigo.set(true);
+  this.mensajeRecuperar.set('');
   this.authService.solicitarCodigo(correo).subscribe({
     next: () => {
+      this.enviandoCodigo.set(false);
       this.correoEnviado.set(true);
       this.codigoValido.set(false);
       this.codigoIngresado = '';
@@ -150,7 +154,10 @@ export class LoginComponent implements OnInit {
       }, 1000);
     },
     error: (err) => {
-      const texto = typeof err.error === 'string' ? err.error : 'No se pudo enviar el código.';
+      this.enviandoCodigo.set(false);
+      const texto = err.status === 0
+        ? 'No hay conexión con el servidor. Verifique su internet e intente nuevamente.'
+        : (typeof err.error === 'string' && err.error ? err.error : 'No se pudo enviar el código.');
       this.mensajeRecuperar.set(texto);
     }
   });

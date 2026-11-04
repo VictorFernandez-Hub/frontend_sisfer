@@ -68,6 +68,8 @@ cambiarClave(email: string, codigo: string, claveNueva: string) {
   tieneRol(rolesPermitidos: string[]): boolean {
     const misRoles = this.rolesActuales();
     if (!misRoles || misRoles.length === 0) return false;
+    // El administrador del sistema tiene acceso a todo (igual que en SecurityConfig del backend)
+    if (misRoles.includes('ADMIN_SISTEMA') || misRoles.includes('ROLE_ADMIN_SISTEMA')) return true;
     return rolesPermitidos.some(rolPermitido => misRoles.includes(rolPermitido));
   }
 

@@ -55,7 +55,13 @@
 
   @if (!correoEnviado()) {
     <input class="form-control mb-3" placeholder="Correo" [(ngModel)]="correoRecuperar" name="correoRecuperar" />
-    <button type="button" class="btn btn-secondary w-100" (click)="enviarCodigo()">Enviar código</button>
+    <button type="button" class="btn btn-secondary w-100" (click)="enviarCodigo()" [disabled]="enviandoCodigo()">
+      @if (enviandoCodigo()) {
+        <span class="spinner-border spinner-border-sm me-2"></span>Enviando código...
+      } @else {
+        Enviar código
+      }
+    </button>
   }
 
   @if (correoEnviado() && !codigoValido()) {
