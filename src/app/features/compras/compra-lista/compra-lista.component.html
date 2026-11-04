@@ -4,10 +4,12 @@
     <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
     <span>Actualizar</span>
   </button>
+  @if (puedeGestionar) {
   <button type="button" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm" (click)="nuevaCompra()">
     <i class="bi bi-plus-lg" aria-hidden="true"></i>
     <span>Nueva compra</span>
   </button>
+  }
 </div>
 
 <div class="container-fluid mt-4">
@@ -187,7 +189,7 @@
         <div class="fw-bold fs-6">Total: S/ {{ d.totTotal | number:'1.2-2' }}</div>
       </div>
 
-      @if (d.estado === 'BORRADOR') {
+      @if (d.estado === 'BORRADOR' && puedeGestionar) {
       <div class="d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-outline-danger" (click)="anular(d.idCompra, d.numero)" [disabled]="guardando()">
           Anular

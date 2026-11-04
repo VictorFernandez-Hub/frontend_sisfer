@@ -38,7 +38,7 @@ export class ProveedorListaComponent implements OnInit {
 
   // Mismos roles que SecurityConfig para /api/proveedores/**
   readonly puedeGestionar = computed(() => this.authService.tieneRol([
-    'ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA','ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'ALMACENERO', 'ROLE_ALMACENERO'
+    'ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA','ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'ALMACENERO', 'ROLE_ALMACENERO', 'MOD_PROVEEDORES'
   ]));
 
   // Filtro en memoria: documento, razón social, nombre comercial o contacto

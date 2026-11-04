@@ -59,10 +59,14 @@
       </div>
       <div class="mb-3">
         <label class="form-label small d-block">Módulos</label>
-        <label class="me-3"><input type="checkbox" [(ngModel)]="modulos.USUARIOS" /> Usuarios</label>
-        <label class="me-3"><input type="checkbox" [(ngModel)]="modulos.CLIENTES" /> Clientes</label>
-        <label class="me-3"><input type="checkbox" [(ngModel)]="modulos.PRODUCTOS" /> Productos</label>
-        <label><input type="checkbox" [(ngModel)]="modulos.PROVEEDORES" /> Proveedores</label>
+        <label class="d-block fw-semibold mb-1">
+          <input type="checkbox" [checked]="todosMarcados()" (change)="marcarTodos($any($event.target).checked)" />
+          Todos los módulos (administrador)
+        </label>
+        @for (m of MODULOS; track m.codigo) {
+          <label class="me-3"><input type="checkbox" [(ngModel)]="modulos[m.codigo]" /> {{ m.nombre }}</label>
+        }
+        <div class="form-text">Cada módulo marcado da acceso completo a esa pantalla. Con Usuarios y Roles, este rol podrá crear usuarios y asignar módulos a los demás.</div>
       </div>
       <div class="d-flex justify-content-end gap-2">
         <button class="btn btn-light" (click)="limpiar()">Limpiar</button>

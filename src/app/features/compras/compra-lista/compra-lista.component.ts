@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { BuscadorComponent } from '../../../shared/components/buscador/buscador.component';
 import { extraerMensajeError } from '../../../shared/utils/http-error.util';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ProveedorService } from '../../proveedores/servicios/proveedor.service';
 import { ProductoService } from '../../productos/servicios/producto.service';
 import { Proveedor } from '../../proveedores/modelos/proveedor.model';
@@ -33,8 +34,14 @@ export class CompraListaComponent implements OnInit {
   private readonly proveedorService = inject(ProveedorService);
   private readonly productoService = inject(ProductoService);
   private readonly notificacion = inject(NotificationService);
+  private readonly authService = inject(AuthService);
 
-  compras = signal<CompraResumen[]>([]);
+  // El gerente solo consulta: no registra, confirma ni anula (igual que SecurityConfig del backend)
+  readonly puedeGestionar = this.authService.tieneRol([
+    'ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO', 'ALMACENERO', 'ROLE_ALMACENERO', 'MOD_COMPRAS'
+  ]);
+
+  compras =signal<CompraResumen[]>([]);
   proveedores = signal<Proveedor[]>([]);
   productos = signal<Producto[]>([]);
   cargando = signal<boolean>(false);

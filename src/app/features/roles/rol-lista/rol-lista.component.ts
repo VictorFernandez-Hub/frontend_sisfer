@@ -15,7 +15,29 @@ export class RolListaComponent implements OnInit {
   codigo = '';
   nombre = '';
   descripcion = '';
-  modulos = { USUARIOS: false, CLIENTES: false, PRODUCTOS: false, PROVEEDORES: false };
+  // Módulos que se pueden asignar a un rol (mismos que RolController.MODULOS_ASIGNABLES del backend).
+  // Usuarios, Roles y Bitácora permiten crear un rol administrador que asigna módulos a los demás.
+  readonly MODULOS = [
+    { codigo: 'CLIENTES', nombre: 'Clientes' },
+    { codigo: 'PRODUCTOS', nombre: 'Productos' },
+    { codigo: 'PROVEEDORES', nombre: 'Proveedores' },
+    { codigo: 'VENTAS', nombre: 'Ventas' },
+    { codigo: 'COMPRAS', nombre: 'Compras' },
+    { codigo: 'INVENTARIO', nombre: 'Inventario' },
+    { codigo: 'KARDEX', nombre: 'Kardex' },
+    { codigo: 'USUARIOS', nombre: 'Usuarios' },
+    { codigo: 'ROLES', nombre: 'Roles' },
+    { codigo: 'BITACORA', nombre: 'Bitácora' }
+  ];
+
+  todosMarcados(): boolean {
+    return this.MODULOS.every(m => this.modulos[m.codigo]);
+  }
+
+  marcarTodos(marcar: boolean): void {
+    this.modulos = Object.fromEntries(this.MODULOS.map(m => [m.codigo, marcar]));
+  }
+  modulos: Record<string, boolean> = this.modulosVacios();
   mensaje = signal('');
 
   ngOnInit(): void {
@@ -33,12 +55,9 @@ export class RolListaComponent implements OnInit {
     this.codigo = r.codigo;
     this.nombre = r.nombre;
     this.descripcion = r.descripcion;
-    this.modulos = {
-        USUARIOS: r.modulos.includes('USUARIOS'),
-        CLIENTES: r.modulos.includes('CLIENTES'),
-        PRODUCTOS: r.modulos.includes('PRODUCTOS'),
-      PROVEEDORES: r.modulos.includes('PROVEEDORES')
-  };
+    this.modulos = Object.fromEntries(
+      this.MODULOS.map(m => [m.codigo, (r.modulos || []).includes(m.codigo)])
+    );
   this.mostrarForm.set(true);
 }
 
@@ -100,7 +119,11 @@ guardar(): void {
       this.codigo = '';
       this.nombre = '';
       this.descripcion = '';
-      this.modulos = { USUARIOS: false, CLIENTES: false, PRODUCTOS: false, PROVEEDORES: false };
+      this.modulos = this.modulosVacios();
+    }
+
+    private modulosVacios(): Record<string, boolean> {
+      return Object.fromEntries(this.MODULOS.map(m => [m.codigo, false]));
     }
   
   

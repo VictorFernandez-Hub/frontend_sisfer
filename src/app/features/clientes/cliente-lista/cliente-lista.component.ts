@@ -24,7 +24,8 @@ export class ClienteListaComponent implements OnInit {
   return this.auth.tieneRol([
     'ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA',
     'ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO',
-    'VENDEDOR', 'ROLE_VENDEDOR'
+    'VENDEDOR', 'ROLE_VENDEDOR',
+    'MOD_CLIENTES' // Rol con el módulo Clientes asignado en "Roles y accesos"
     ]);
   }
 
