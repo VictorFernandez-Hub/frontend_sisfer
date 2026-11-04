@@ -1,0 +1,19 @@
+/* Evita que nombres largos estiren la tabla */
+.celda-producto {
+  max-width: 260px;
+}
+
+/* Tarjetas de resumen que funcionan como filtro */
+.tarjeta-resumen {
+  cursor: pointer;
+  background: #fff;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.tarjeta-resumen:hover {
+  transform: translateY(-2px);
+}
+
+.tarjeta-resumen.activa {
+  outline: 2px solid #ffa500;
+}

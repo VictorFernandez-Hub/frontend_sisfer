@@ -1,0 +1,140 @@
+<div class="container-fluid px-4 mt-4 d-flex gap-2">
+  <button type="button" class="btn btn-light ms-auto d-flex align-items-center gap-2 shadow-sm"
+    (click)="cargarInventario()" [disabled]="cargando()">
+    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+    <span>Actualizar</span>
+  </button>
+</div>
+
+<div class="container-fluid mt-4">
+  <h2 class="text-white text-center mt-4 mb-3 fw-bold">Consulta de Inventario</h2>
+
+  <!-- Resumen: al tocar una tarjeta se filtra la tabla -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <button type="button" class="card tarjeta-resumen w-100 text-start shadow-sm border-0"
+        [class.activa]="filtroNivel() === 'TODOS'" (click)="elegirFiltro('TODOS')">
+        <div class="card-body py-2">
+          <div class="small text-secondary text-uppercase">Productos activos</div>
+          <div class="fs-3 fw-bold text-dark">{{ resumen().total }}</div>
+        </div>
+      </button>
+    </div>
+    <div class="col-6 col-lg-3">
+      <button type="button" class="card tarjeta-resumen w-100 text-start shadow-sm border-0"
+        [class.activa]="filtroNivel() === 'OK'" (click)="elegirFiltro('OK')">
+        <div class="card-body py-2">
+          <div class="small text-secondary text-uppercase">Disponibles</div>
+          <div class="fs-3 fw-bold text-success">{{ resumen().ok }}</div>
+        </div>
+      </button>
+    </div>
+    <div class="col-6 col-lg-3">
+      <button type="button" class="card tarjeta-resumen w-100 text-start shadow-sm border-0"
+        [class.activa]="filtroNivel() === 'STOCK_MINIMO'" (click)="elegirFiltro('STOCK_MINIMO')">
+        <div class="card-body py-2">
+          <div class="small text-secondary text-uppercase">Stock mínimo</div>
+          <div class="fs-3 fw-bold text-warning-emphasis">{{ resumen().minimo }}</div>
+        </div>
+      </button>
+    </div>
+    <div class="col-6 col-lg-3">
+      <button type="button" class="card tarjeta-resumen w-100 text-start shadow-sm border-0"
+        [class.activa]="filtroNivel() === 'AGOTADO'" (click)="elegirFiltro('AGOTADO')">
+        <div class="card-body py-2">
+          <div class="small text-secondary text-uppercase">Agotados</div>
+          <div class="fs-3 fw-bold text-danger">{{ resumen().agotado }}</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <app-buscador [placeholder]="'Buscar por código, nombre, categoría o marca...'"
+    (alBuscar)="filtrarProductos($event)">
+  </app-buscador>
+
+  @if (errorMessage()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+    <span>{{ errorMessage() }}</span>
+  </div>
+  }
+
+  <div class="card shadow-sm border-0 overflow-hidden rounded-3">
+    <div class="table-responsive">
+      <table id="tablaInventario" class="table table-hover table-sm text-nowrap align-middle mb-0">
+        <thead class="table-light text-uppercase fs-7 border-bottom text-secondary">
+          <tr>
+            <th scope="col" class="py-2 ps-3">Código</th>
+            <th scope="col" class="py-2">Producto</th>
+            <th scope="col" class="py-2">Categoría</th>
+            <th scope="col" class="py-2">Marca</th>
+            <th scope="col" class="text-end py-2">Stock actual</th>
+            <th scope="col" class="text-end py-2">Mínimo</th>
+            <th scope="col" class="text-end py-2">Falta</th>
+            <th scope="col" class="text-end py-2">Valor (S/)</th>
+            <th scope="col" class="py-2 pe-3">Nivel</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (cargando()) {
+          <tr>
+            <td colspan="9" class="text-center py-4 text-secondary">
+              <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+              Cargando inventario...
+            </td>
+          </tr>
+          } @else {
+          @for (p of productosFiltrados(); track p.id_producto) {
+          <tr class="border-bottom">
+            <td class="ps-3 font-monospace fw-semibold text-secondary">{{ p.codigo }}</td>
+            <td class="celda-producto">
+              <div class="text-dark fw-semibold text-truncate">{{ p.nombre }}</div>
+            </td>
+            <td class="text-dark">{{ p.categoria }}</td>
+            <td class="text-secondary">{{ p.marca }}</td>
+            <td class="text-end fw-semibold text-dark">
+              {{ p.stock_actual | number:'1.0-3' }} <span class="text-secondary small">{{ p.unidad_codigo }}</span>
+            </td>
+            <td class="text-end text-muted small">{{ p.stock_minimo | number:'1.0-3' }}</td>
+            <td class="text-end small" [class.text-danger]="faltanteDe(p) > 0" [class.text-muted]="faltanteDe(p) === 0">
+              {{ faltanteDe(p) | number:'1.0-3' }}
+            </td>
+            <td class="text-end text-secondary">{{ valorDe(p) | number:'1.2-2' }}</td>
+            <td class="pe-3">
+              <span class="badge py-1 px-2" [ngClass]="{
+                  'bg-success-subtle text-success border border-success-subtle': nivelDe(p) === 'OK',
+                  'bg-warning-subtle text-warning-emphasis border border-warning-subtle': nivelDe(p) === 'STOCK_MINIMO',
+                  'bg-danger-subtle text-danger border border-danger-subtle': nivelDe(p) === 'AGOTADO'
+                }">
+                {{ textoNivel(p) }}
+              </span>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="9" class="text-center py-5 text-secondary">
+              <i class="bi bi-box-seam fs-1 d-block mb-2" aria-hidden="true"></i>
+              @if (productos().length === 0) {
+              <span>Aún no hay productos en el inventario</span>
+              } @else {
+              <span>Ningún producto coincide con la búsqueda o el filtro</span>
+              }
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+        @if (!cargando() && productos().length > 0) {
+        <tfoot class="table-light">
+          <tr>
+            <td colspan="7" class="text-end fw-semibold py-2">Valor total del inventario (al precio de compra):</td>
+            <td class="text-end fw-bold py-2">S/ {{ resumen().valorTotal | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+        }
+      </table>
+    </div>
+  </div>
+</div>

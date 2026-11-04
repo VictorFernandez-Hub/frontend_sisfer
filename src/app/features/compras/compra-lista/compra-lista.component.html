@@ -1,0 +1,273 @@
+<div class="container-fluid px-4 mt-4 d-flex gap-2">
+  <button type="button" class="btn btn-light ms-auto d-flex align-items-center gap-2 shadow-sm"
+    (click)="cargarCompras()" [disabled]="cargando()">
+    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+    <span>Actualizar</span>
+  </button>
+  <button type="button" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm" (click)="nuevaCompra()">
+    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <span>Nueva compra</span>
+  </button>
+</div>
+
+<div class="container-fluid mt-4">
+  <h2 class="text-white text-center mt-4 mb-3 fw-bold">Compras</h2>
+
+  <!-- ===================== FORMULARIO: NUEVA COMPRA ===================== -->
+  @if (mostrandoForm()) {
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+      <h5 class="fw-bold mb-3">Nueva compra</h5>
+
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-5">
+          <label for="compProveedor" class="form-label small mb-1">Proveedor *</label>
+          <select id="compProveedor" class="form-select form-select-sm" [(ngModel)]="idProveedor">
+            <option [ngValue]="null">Seleccione un proveedor</option>
+            @for (p of proveedores(); track p.id_proveedor) {
+            <option [ngValue]="p.id_proveedor">{{ p.razon_social }} ({{ p.num_doc }})</option>
+            }
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label for="compFecha" class="form-label small mb-1">Fecha de la factura *</label>
+          <input id="compFecha" type="date" class="form-control form-control-sm" [(ngModel)]="fecCompra">
+        </div>
+        <div class="col-6 col-md-2">
+          <label for="compTipoDoc" class="form-label small mb-1">Tipo de documento</label>
+          <select id="compTipoDoc" class="form-select form-select-sm" [(ngModel)]="tipoDoc">
+            <option value="FACTURA">Factura</option>
+            <option value="BOLETA">Boleta</option>
+            <option value="GUIA">Guía de remisión</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="compNumDoc" class="form-label small mb-1">N° del documento</label>
+          <input id="compNumDoc" type="text" maxlength="30" class="form-control form-control-sm"
+            placeholder="Ej. F001-000123" [(ngModel)]="numDoc">
+        </div>
+      </div>
+
+      <div class="table-responsive mb-2">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light text-uppercase fs-7 text-secondary">
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col" class="text-end">Cantidad</th>
+              <th scope="col" class="text-end">Costo unit. (S/)</th>
+              <th scope="col" class="text-end">Total (S/)</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of lineas; track $index) {
+            <tr>
+              <td class="select-producto">
+                <select class="form-select form-select-sm" [(ngModel)]="l.idProducto"
+                  (ngModelChange)="alElegirProducto(l)" [attr.aria-label]="'Producto de la línea ' + ($index + 1)">
+                  <option [ngValue]="null">Seleccione un producto</option>
+                  @for (p of productos(); track p.id_producto) {
+                  <option [ngValue]="p.id_producto">{{ nombreProducto(p) }}</option>
+                  }
+                </select>
+              </td>
+              <td style="width: 130px">
+                <input type="number" min="0.001" step="any" class="form-control form-control-sm text-end"
+                  [(ngModel)]="l.cantidad" aria-label="Cantidad">
+              </td>
+              <td style="width: 150px">
+                <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end"
+                  [(ngModel)]="l.costoUnit" aria-label="Costo unitario">
+              </td>
+              <td class="text-end fw-semibold" style="width: 130px">{{ totalLinea(l) | number:'1.2-2' }}</td>
+              <td class="text-end" style="width: 50px">
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarLinea($index)"
+                  [disabled]="lineas.length === 1" aria-label="Quitar línea">
+                  <i class="bi bi-trash" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-3" (click)="agregarLinea()">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar producto
+      </button>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-7">
+          <label for="compObs" class="form-label small mb-1">Observación</label>
+          <textarea id="compObs" rows="2" maxlength="300" class="form-control form-control-sm"
+            [(ngModel)]="observacion"></textarea>
+        </div>
+        <div class="col-12 col-md-5">
+          <div class="d-flex justify-content-between"><span class="text-secondary">Subtotal</span>
+            <span>S/ {{ subtotal() | number:'1.2-2' }}</span></div>
+          <div class="d-flex justify-content-between"><span class="text-secondary">IGV (18%)</span>
+            <span>S/ {{ igv() | number:'1.2-2' }}</span></div>
+          <div class="d-flex justify-content-between fw-bold fs-5"><span>Total</span>
+            <span>S/ {{ total() | number:'1.2-2' }}</span></div>
+        </div>
+      </div>
+
+      @if (formError()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3 mb-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        <span>{{ formError() }}</span>
+      </div>
+      }
+
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button type="button" class="btn btn-light" (click)="cancelarForm()" [disabled]="guardando()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarBorrador()" [disabled]="guardando()">
+          @if (guardando()) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+          Guardar en borrador
+        </button>
+      </div>
+      <p class="small text-secondary mt-2 mb-0">
+        En borrador el stock todavía no cambia. Al confirmar la compra, la mercadería entra al stock y se anota en el Kardex.
+      </p>
+    </div>
+  </div>
+  }
+
+  <!-- ===================== DETALLE DE UNA COMPRA ===================== -->
+  @if (detalle(); as d) {
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h5 class="fw-bold mb-0">Compra {{ d.numero }}</h5>
+        <span class="badge py-1 px-2" [ngClass]="claseEstado(d.estado)">{{ d.estado }}</span>
+        <button type="button" class="btn btn-sm btn-light ms-auto" (click)="cerrarDetalle()">Cerrar</button>
+      </div>
+
+      <div class="row g-2 mb-3 small">
+        <div class="col-12 col-md-4"><span class="text-secondary">Proveedor:</span> {{ d.proveedor }}</div>
+        <div class="col-6 col-md-2"><span class="text-secondary">Fecha:</span> {{ d.fecCompra | date:'dd/MM/yyyy' }}</div>
+        <div class="col-6 col-md-3"><span class="text-secondary">Documento:</span> {{ d.tipoDoc }} {{ d.numDoc }}</div>
+        <div class="col-12 col-md-3"><span class="text-secondary">Registró:</span> {{ d.usuario }}</div>
+        @if (d.observacion) {
+        <div class="col-12"><span class="text-secondary">Observación:</span> {{ d.observacion }}</div>
+        }
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-2">
+          <thead class="table-light text-uppercase fs-7 text-secondary">
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col">Unidad</th>
+              <th scope="col" class="text-end">Cantidad</th>
+              <th scope="col" class="text-end">Costo unit.</th>
+              <th scope="col" class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of d.lineas; track l.idProducto) {
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ l.producto }}</div>
+                <div class="font-monospace small text-secondary">{{ l.codigo }}</div>
+              </td>
+              <td>{{ l.unidad }}</td>
+              <td class="text-end">{{ l.cantidad | number:'1.0-3' }}</td>
+              <td class="text-end">S/ {{ l.costoUnit | number:'1.2-2' }}</td>
+              <td class="text-end fw-semibold">S/ {{ l.totLinea | number:'1.2-2' }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex flex-column align-items-end small mb-3">
+        <div>Subtotal: S/ {{ d.totSubtotal | number:'1.2-2' }}</div>
+        <div>IGV: S/ {{ d.totIgv | number:'1.2-2' }}</div>
+        <div class="fw-bold fs-6">Total: S/ {{ d.totTotal | number:'1.2-2' }}</div>
+      </div>
+
+      @if (d.estado === 'BORRADOR') {
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-danger" (click)="anular(d.idCompra, d.numero)" [disabled]="guardando()">
+          Anular
+        </button>
+        <button type="button" class="btn btn-success" (click)="confirmar(d.idCompra, d.numero)" [disabled]="guardando()">
+          @if (guardando()) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+          Confirmar compra
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- ===================== LISTADO ===================== -->
+  <app-buscador [placeholder]="'Buscar por N° de compra, proveedor o documento...'"
+    (alBuscar)="filtrarCompras($event)">
+  </app-buscador>
+
+  @if (errorMessage()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+    <span>{{ errorMessage() }}</span>
+  </div>
+  }
+
+  <div class="card shadow-sm border-0 overflow-hidden rounded-3">
+    <div class="table-responsive">
+      <table id="tablaCompras" class="table table-hover table-sm text-nowrap align-middle mb-0">
+        <thead class="table-light text-uppercase fs-7 border-bottom text-secondary">
+          <tr>
+            <th scope="col" class="py-2 ps-3">N° compra</th>
+            <th scope="col" class="py-2">Fecha</th>
+            <th scope="col" class="py-2">Proveedor</th>
+            <th scope="col" class="py-2">Documento</th>
+            <th scope="col" class="text-end py-2">Total</th>
+            <th scope="col" class="py-2">Estado</th>
+            <th scope="col" class="py-2">Registró</th>
+            <th scope="col" class="py-2 pe-3 text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (cargando()) {
+          <tr>
+            <td colspan="8" class="text-center py-4 text-secondary">
+              <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+              Cargando compras...
+            </td>
+          </tr>
+          } @else {
+          @for (c of comprasFiltradas(); track c.idCompra) {
+          <tr class="border-bottom">
+            <td class="ps-3 fw-semibold">{{ c.numero }}</td>
+            <td class="text-secondary">{{ c.fecCompra | date:'dd/MM/yyyy' }}</td>
+            <td class="celda-proveedor text-truncate">{{ c.proveedor }}</td>
+            <td class="text-secondary">{{ c.tipoDoc }} {{ c.numDoc }}</td>
+            <td class="text-end fw-semibold">S/ {{ c.totTotal | number:'1.2-2' }}</td>
+            <td><span class="badge py-1 px-2" [ngClass]="claseEstado(c.estado)">{{ c.estado }}</span></td>
+            <td class="text-secondary">{{ c.usuario }}</td>
+            <td class="pe-3 text-end">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="verDetalle(c)">
+                Ver detalle
+              </button>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="text-center py-5 text-secondary">
+              <i class="bi bi-bag fs-1 d-block mb-2" aria-hidden="true"></i>
+              @if (compras().length === 0) {
+              <span>Aún no hay compras. Use «Nueva compra» para registrar la primera.</span>
+              } @else {
+              <span>Ninguna compra coincide con la búsqueda</span>
+              }
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
