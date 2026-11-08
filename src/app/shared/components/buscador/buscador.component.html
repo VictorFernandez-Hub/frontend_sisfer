@@ -1,26 +1,34 @@
 <div class="row mb-3">
-  <div class="col-12 col-md-6 mx-auto">
-    <div class="input-group shadow-sm rounded-3 overflow-hidden">
-      <span class="input-group-text bg-white border-end-0 text-muted">
-        <i class="bi bi-search"></i>
+  <div class="col-12 col-md-8 col-lg-6 mx-auto">
+    <div class="input-group search-bar-container shadow-sm rounded-pill overflow-hidden bg-white border">
+      
+      <!-- Icono de Búsqueda -->
+      <span class="input-group-text bg-transparent border-0 ps-3 text-muted">
+        <i class="bi bi-search fs-5"></i>
       </span>
+
+      <!-- Input con detección de la tecla Escape para limpiar -->
       <input 
         #txtBuscar
         type="text" 
-        class="form-control border-start-0 border-end-0 ps-1 py-2" 
+        class="form-control border-0 shadow-none bg-transparent py-2 px-2" 
         [placeholder]="placeholder()" 
         (input)="onInput($event)"
         (keyup.enter)="alBuscar.emit(txtBuscar.value)"
+        (keyup.escape)="txtBuscar.value = ''; alBuscar.emit('')"
         autocomplete="off" />
       
-      <button 
-        class="btn d-flex align-items-center gap-2 px-4 text-white fw-semibold border-0" 
-        type="button"
-        style="background-color: #FFA500;"
-        (click)="alBuscar.emit(txtBuscar.value)">
-        <i class="bi bi-sliders"></i>
-        Buscar
-      </button>
+      <!-- Botón de Limpiar con la "X" (Aparece solo cuando hay texto) -->
+      @if (txtBuscar.value) {
+        <button 
+          class="btn border-0 bg-transparent text-muted pe-3 d-flex align-items-center shadow-none" 
+          type="button"
+          (click)="txtBuscar.value = ''; alBuscar.emit('')"
+          title="Limpiar búsqueda">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      }
+
     </div>
   </div>
 </div>

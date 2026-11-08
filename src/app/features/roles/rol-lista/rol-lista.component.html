@@ -1,36 +1,69 @@
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="text-white mb-0">Roles y accesos</h4>
-    <button class="btn text-white" style="background:#f97316;" (click)="nuevo()">Nuevo rol</button>
-  </div>
+<div class="container-fluid px-4 mt-4 d-flex">
+  <button type="button" class="btn text-white ms-auto d-flex align-items-center gap-2 shadow-sm btn-naranja" (click)="nuevo()">
+    <i class="bi bi-shield-plus" aria-hidden="true"></i>
+    <span>Nuevo Rol</span>
+  </button>
+</div>
 
-  <div class="card shadow-sm">
-    <div class="card-body p-0">
-      <table class="table mb-0 align-middle">
-        <thead class="table-light">
+<div class="container-fluid mt-4">
+  <h2 class="text-white text-center mt-4 mb-3 fw-bold">Roles y accesos</h2>
+
+  <app-buscador [placeholder]="'Buscar por código, nombre o descripción'" (alBuscar)="filtrarRoles($event)">
+  </app-buscador>
+
+  <div class="card shadow-sm border-0 overflow-hidden rounded-3">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm align-middle mb-0">
+        <thead class="table-light text-uppercase fs-7 border-bottom text-secondary">
           <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Para qué sirve</th>
-            <th>Módulos</th>
-            <th class="text-end">Acciones</th>
+            <th scope="col" class="py-2.5 ps-4" style="width: 15%;">Código</th>
+            <th scope="col" class="py-2.5" style="width: 20%;">Nombre</th>
+            <th scope="col" class="py-2.5" style="width: 25%;">Para qué sirve</th>
+            <th scope="col" class="py-2.5" style="width: 25%;">Módulos</th>
+            <th scope="col" class="text-end py-2.5 pe-4" style="width: 15%;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           @for (r of roles(); track r.codigo) {
-            <tr>
-              <td class="fw-semibold">{{ r.codigo }}</td>
-              <td>{{ r.nombre }}</td>
-              <td class="text-secondary">{{ r.descripcion }}</td>
-              <td>
-                @for (m of r.modulos; track m) {
-                  <span class="badge me-1" style="background:#fff7ed; color:#c2410c;">{{ m }}</span>
-                }
+            <tr class="border-bottom">
+              <td class="fw-semibold py-2 ps-4">{{ r.codigo }}</td>
+              <td class="py-2">{{ r.nombre }}</td>
+              <td class="text-secondary py-2 text-wrap" style="max-width: 200px;">{{ r.descripcion }}</td>
+              <td class="py-2">
+                <div class="d-flex flex-wrap gap-1" style="max-width: 250px;">
+                  @for (m of r.modulos; track m) {
+                    <span class="badge" style="background:#fff7ed; color:#c2410c;">{{ m }}</span>
+                  }
+                </div>
               </td>
-              <td class="text-end text-nowrap">
-                <button class="btn btn-sm text-white me-1" style="background:#f97316;"
-                  (click)="cargarParaEditar(r)">Editar</button>
-                <button class="btn btn-sm btn-outline-danger" (click)="eliminarRol(r)">Eliminar</button>
+              <td class="text-end py-2 pe-4">
+                <div class="d-inline-flex gap-1.5">
+                  <button type="button"
+                    class="btn btn-sm btn-light border text-dark d-flex align-items-center gap-1 px-2 py-0.5 shadow-xs"
+                    (click)="cargarParaEditar(r)" title="Editar Rol">
+                    <i class="bi bi-pencil-square text-warning" aria-hidden="true"></i>
+                    <span>Editar</span>
+                  </button>
+
+                  <button type="button"
+                    class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-2 py-0.5 shadow-xs"
+                    (click)="eliminarRol(r)" title="Eliminar Rol">
+                    <i class="bi bi-trash3" aria-hidden="true"></i>
+                    <span>Borrar</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center py-5 bg-light">
+                <div class="d-flex flex-column align-items-center justify-content-center py-3">
+                  <div class="text-secondary bg-white shadow-sm rounded-circle p-3 mb-3">
+                    <i class="bi bi-shield-exclamation fs-3 text-muted" aria-hidden="true"></i>
+                  </div>
+                  <h6 class="fw-bold text-dark mb-1">No se encontraron roles registrados</h6>
+                  <p class="text-secondary small mb-0">Cree un nuevo perfil de seguridad para comenzar a gestionar accesos.</p>
+                </div>
               </td>
             </tr>
           }

@@ -20,8 +20,8 @@
   </button>
 
   @if (puedeGestionar()) {
-  <button type="button" class="btn btn-primary ms-auto d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal"
-    data-bs-target="#modalRegistroPro" (click)="prepararNuevo()">
+  <button type="button" class="btn text-white ms-auto d-flex align-items-center gap-2 shadow-sm btn-naranja"
+    data-bs-toggle="modal" data-bs-target="#modalRegistroPro" (click)="prepararNuevo()">
     <i class="bi bi-box-seam" aria-hidden="true"></i>
     <span>Agregar Producto</span>
   </button>
@@ -238,10 +238,12 @@
               </div>
 
               <div class="form-floating mb-3">
-                <select class="form-select" formControlName="id_proveedor" [class.is-invalid]="esInvalido('id_proveedor')">
+                <select class="form-select" formControlName="id_proveedor"
+                  [class.is-invalid]="esInvalido('id_proveedor')">
                   <option [ngValue]="null" disabled>Seleccione...</option>
                   @for (pr of proveedores(); track pr.id_proveedor) {
-                  <option [ngValue]="pr.id_proveedor">{{ pr.razon_social }} ({{ pr.tipo_doc }} {{ pr.num_doc }})</option>
+                  <option [ngValue]="pr.id_proveedor">{{ pr.razon_social }} ({{ pr.tipo_doc }} {{ pr.num_doc }})
+                  </option>
                   }
                 </select>
                 <label>Proveedor *</label>
@@ -288,7 +290,8 @@
               </div>
 
               <div class="form-floating mb-3">
-                <textarea class="form-control" formControlName="descripcion" maxlength="300" style="height: 80px"></textarea>
+                <textarea class="form-control" formControlName="descripcion" maxlength="300"
+                  style="height: 80px"></textarea>
                 <label>Descripción (opcional)</label>
               </div>
             </div>
@@ -297,8 +300,8 @@
               <div class="row g-2">
                 <div class="col-6">
                   <div class="form-floating mb-1">
-                    <input type="number" class="form-control text-end" formControlName="stock_inicial" min="0" step="any"
-                      [class.is-invalid]="esInvalido('stock_inicial')" />
+                    <input type="number" class="form-control text-end" formControlName="stock_inicial" min="0"
+                      step="any" [class.is-invalid]="esInvalido('stock_inicial')" />
                     <label>Stock actual *</label>
                   </div>
                 </div>
@@ -333,7 +336,8 @@
               <div class="small mb-3" [class.text-danger]="esInvalido('precio_venta') || precioBajoCosto()"
                 [class.text-muted]="!(esInvalido('precio_venta') || precioBajoCosto())">
                 @if (precioBajoCosto()) {
-                <i class="bi bi-exclamation-circle me-1"></i>No puede ser menor al último costo (S/ {{ precioCompraActual() | number:'1.2-2' }}).
+                <i class="bi bi-exclamation-circle me-1"></i>No puede ser menor al último costo (S/ {{
+                precioCompraActual() | number:'1.2-2' }}).
                 } @else if (esInvalido('precio_venta')) {
                 <i class="bi bi-exclamation-circle me-1"></i>Ingrese un monto válido, con máximo 2 decimales.
                 } @else if (!puedeCambiarPrecio()) {

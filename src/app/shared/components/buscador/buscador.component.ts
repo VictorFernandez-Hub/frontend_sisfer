@@ -7,18 +7,20 @@ import { Component, output, input } from '@angular/core';
   templateUrl: './buscador.component.html'
 })
 export class BuscadorComponent {
-  // Input basado en Signals (Sintaxis moderna)
+  // Mantiene exactamente la misma variable y tipo para tus compañeros
   placeholder = input<string>('Buscar...');
 
-  // Output basado en la API moderna de Angular (Reemplaza a @Output y EventEmitter)
+  // Mantiene exactamente el mismo output
   alBuscar = output<string>();
 
   onInput(event: Event): void {
     const elemento = event.target as HTMLInputElement;
-    
-    // Si necesitas usar placeholder aquí en la lógica de TS, se llama como función:
-    // console.log('El placeholder actual es:', this.placeholder());
-    
     this.alBuscar.emit(elemento.value);
+  }
+
+  // MÉTODO NECESARIO: Este es el que elimina el error rojo en el HTML
+  limpiarBusqueda(inputElement: HTMLInputElement): void {
+    inputElement.value = '';
+    this.alBuscar.emit('');
   }
 }

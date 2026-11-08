@@ -75,3 +75,8 @@
     animation: none;
   }
 }
+
+.btn-naranja {
+  background-color: #f97316;
+  border-color: #f97316;
+}

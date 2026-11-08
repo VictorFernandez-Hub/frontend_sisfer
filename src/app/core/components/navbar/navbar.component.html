@@ -1,97 +1,137 @@
-<nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-black">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-black py-2">
   <div class="container-fluid">
-    <div class="navbar-brand d-flex align-items-center gap-2 m-0 fs-6">
-      
-      <div class="d-flex flex-row align-items-center gap-2">
-          <i class="bi bi-person-circle text-warning fs-5"></i>
-            <span class="text-white">Hola, <span class="fw-semibold text-warning">{{ username() || 'Usuario' }}
-          </span>
+
+    <!-- Perfil de Usuario con Menú Desplegable (Dropdown) -->
+    <div class="dropdown m-0">
+      <a class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle text-white fs-6 py-1 px-2 rounded"
+        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-person-circle text-warning fs-4"></i>
+        <span>
+          Hola, <span class="fw-semibold text-warning">{{ username() || 'Usuario' }}</span>
         </span>
-      </div>
+      </a>
+
+      <!-- Tarjeta Desplegable con los detalles completos -->
+      <ul class="dropdown-menu dropdown-menu-dark shadow-lg mt-2 p-3" style="min-width: 240px;">
+        <li class="text-center pb-2 border-bottom border-secondary">
+          <i class="bi bi-person-badge fs-2 text-warning"></i>
+          <div class="fw-bold text-white mt-1">{{ username() || 'Usuario' }}</div>
+          <div class="text-info small mt-1">
+            <i class="bi bi-shield-check me-1"></i>
+            @if (tieneRol(['ADMIN_SISTEMA', 'ROLE_ADMIN_SISTEMA'])) {
+            Administrador del Sistema
+            } @else if (tieneRol(['ADMIN_NEGOCIO', 'ROLE_ADMIN_NEGOCIO'])) {
+            Administrador de Negocio
+            } @else if (tieneRol(['ALMACENERO', 'ROLE_ALMACENERO'])) {
+            Almacenero
+            } @else if (tieneRol(['VENDEDOR', 'ROLE_VENDEDOR'])) {
+            Vendedor
+            } @else if (tieneRol(['GERENTE', 'ROLE_GERENTE'])) {
+            Gerente
+            } @else {
+            Colaborador
+            }
+          </div>
+        </li>
+        <li class="pt-2 text-center">
+          <button (click)="logout()" type="button"
+            class="btn btn-orange-logout btn-sm px-4 w-100 d-inline-flex justify-content-center align-items-center gap-2 shadow-sm">
+            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+          </button>
+        </li>
+      </ul>
     </div>
 
-    <button class="navbar-toggler border-0 shadow-none" type="button"
-      (click)="toggleMenu()" aria-label="Toggle navigation">
+    <!-- Botón Hamburguesa para Móvil -->
+    <button class="navbar-toggler border-0 shadow-none" type="button" (click)="toggleMenu()"
+      aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
+    <!-- Menú de Navegación de Módulos -->
     <div class="collapse navbar-collapse" [class.show]="isMenuOpen()" id="menuNavbar">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1 ms-lg-4" (click)="closeMenu()">
+
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1 ms-lg-3" (click)="closeMenu()">
 
         @if (tieneRol(ROLES_CLIENTES) || tieneModulo('CLIENTES')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/clientes" routerLinkActive="active">CLIENTES</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/clientes"
+            routerLinkActive="active">CLIENTES</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_PRODUCTOS) || tieneModulo('PRODUCTOS')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/productos" routerLinkActive="active">PRODUCTOS</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/productos"
+            routerLinkActive="active">PRODUCTOS</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_VENTAS) || tieneModulo('VENTAS')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/ventas" routerLinkActive="active">VENTAS</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/ventas"
+            routerLinkActive="active">VENTAS</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_INVENTARIO) || tieneModulo('INVENTARIO')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/inventario" routerLinkActive="active">INVENTARIO</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/inventario"
+            routerLinkActive="active">INVENTARIO</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_KARDEX) || tieneModulo('KARDEX')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/kardex" routerLinkActive="active">KARDEX</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/kardex"
+            routerLinkActive="active">KARDEX</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_COMPRAS) || tieneModulo('COMPRAS')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/compras" routerLinkActive="active">COMPRAS</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/compras"
+            routerLinkActive="active">COMPRAS</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_PROVEEDORES) || tieneModulo('PROVEEDORES')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/proveedores" routerLinkActive="active">PROVEEDORES</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/proveedores"
+            routerLinkActive="active">PROVEEDORES</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_REPORTES)) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/reportes" routerLinkActive="active">REPORTES</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/reportes"
+            routerLinkActive="active">REPORTES</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_USUARIOS) || tieneModulo('USUARIOS')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/usuarios" routerLinkActive="active">USUARIOS</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/usuarios"
+            routerLinkActive="active">USUARIOS</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_USUARIOS) || tieneModulo('ROLES')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/roles" routerLinkActive="active">ROLES</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/roles"
+            routerLinkActive="active">ROLES</a>
+        </li>
         }
 
         @if (tieneRol(ROLES_USUARIOS) || tieneModulo('BITACORA')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/bitacora" routerLinkActive="active">BITÁCORA</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/bitacora"
+            routerLinkActive="active">BITÁCORA</a>
+        </li>
         }
 
       </ul>
 
-      <div class="d-flex align-items-center">
-        <button (click)="logout()" type="button"
-          class="btn btn-outline-light btn-sm px-3 d-flex align-items-center gap-2">
-          <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-        </button>
-      </div>
     </div>
   </div>
 </nav>

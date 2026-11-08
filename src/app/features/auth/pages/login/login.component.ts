@@ -84,25 +84,32 @@ export class LoginComponent implements OnInit {
   toggleLoginPasswordVisibility(): void { this.hideLoginPassword.update(v => !v); }
   toggleRecoveryPasswordVisibility(): void { this.hideRecoveryPassword.update(v => !v); }
 
-  onSubmit(): void {
-    if (this.loginForm.invalid) {
+ onSubmit(): void {
+    // 1. Validar únicamente que el usuario y la contraseña no estén vacíos
+    const cuentaCtrl = this.loginForm.get('cuenta');
+    const claveCtrl = this.loginForm.get('clave');
+
+    if (!cuentaCtrl?.value || !claveCtrl?.value) {
       this.loginForm.markAllAsTouched();
+      this.errorMessage.set('Por favor, completa todos los campos obligatorios para iniciar sesión.');
       return;
     }
-    this.errorMessage.set('');
-    this.isLoading.set(true);
 
+    // 2. Validar el captcha
     if (!this.captchaLoginValido()) {
-      this.isLoading.set(false);
       this.errorMessage.set('Captcha incorrecto. Resuelva la suma.');
       this.nuevaSumaLogin();
       return;
     }
 
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+
     const { cuenta, clave, rememberMe } = this.loginForm.value;
     if (rememberMe) localStorage.setItem('remembered_cuenta', cuenta);
     else localStorage.removeItem('remembered_cuenta');
 
+    // 3. Petición al backend (aquí el backend dirá si las credenciales coinciden o no)
     this.authService.login({ cuenta, clave }).subscribe({
       next: (res) => {
         this.isLoading.set(false);
@@ -112,9 +119,14 @@ export class LoginComponent implements OnInit {
       error: (err) => {
         this.isLoading.set(false);
         const mensaje = typeof err.error === 'string' ? err.error : '';
-        if (mensaje) this.errorMessage.set(mensaje);
-        else if (err.status === 401 || err.status === 400) this.errorMessage.set('Usuario o contraseña incorrectos.');
-        else this.errorMessage.set('Error de conexión con el servidor. Intente nuevamente.');
+        if (mensaje) {
+          this.errorMessage.set(mensaje);
+        } else if (err.status === 401 || err.status === 400) {
+          this.errorMessage.set('Usuario o contraseña incorrectos.');
+        } else {
+          this.errorMessage.set('Error de conexión con el servidor. Intente nuevamente.');
+        }
+        this.nuevaSumaLogin(); // Renueva el captcha si fallan las credenciales
       }
     });
   }
@@ -126,58 +138,55 @@ export class LoginComponent implements OnInit {
     return '/clientes';
   }
 
-  //ENVIO DE CODIGO DE RECUPERACION
+  // ENVIO DE CODIGO DE RECUPERACION
   enviarCodigo(): void {
-  const correo = (this.correoRecuperar || '').trim();
-  const formatoValido = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(correo);
-  if (!formatoValido) {
-    this.mensajeRecuperar.set('Ingrese un correo válido, con @ y punto.');
-    return;
+    const correo = (this.correoRecuperar || '').trim();
+    const formatoValido = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(correo);
+    if (!formatoValido) {
+      this.mensajeRecuperar.set('Ingrese un correo válido, con @ y punto.');
+      return;
+    }
+    if (this.segundosRestantes() > 0 || this.enviandoCodigo()) return;
+
+    this.enviandoCodigo.set(true);
+    this.mensajeRecuperar.set('');
+    this.authService.solicitarCodigo(correo).subscribe({
+      next: () => {
+        this.enviandoCodigo.set(false);
+        this.correoEnviado.set(true);
+        this.codigoValido.set(false);
+        this.codigoIngresado = '';
+        this.segundosRestantes.set(180);
+        this.mensajeRecuperar.set('');
+        clearInterval(this.contador);
+        this.contador = setInterval(() => {
+          const n = this.segundosRestantes() - 1;
+          this.segundosRestantes.set(n);
+          if (n <= 0) clearInterval(this.contador);
+        }, 1000);
+      },
+      error: (err) => {
+        this.enviandoCodigo.set(false);
+        const texto = err.status === 0
+          ? 'No hay conexión con el servidor. Verifique su internet e intente nuevamente.'
+          : (typeof err.error === 'string' && err.error ? err.error : 'No se pudo enviar el código.');
+        this.mensajeRecuperar.set(texto);
+      }
+    });
   }
-  if (this.segundosRestantes() > 0 || this.enviandoCodigo()) return;
 
-  this.enviandoCodigo.set(true);
-  this.mensajeRecuperar.set('');
-  this.authService.solicitarCodigo(correo).subscribe({
-    next: () => {
-      this.enviandoCodigo.set(false);
-      this.correoEnviado.set(true);
-      this.codigoValido.set(false);
-      this.codigoIngresado = '';
-      this.segundosRestantes.set(180);
-      this.mensajeRecuperar.set('');
-      clearInterval(this.contador);
-      this.contador = setInterval(() => {
-        const n = this.segundosRestantes() - 1;
-        this.segundosRestantes.set(n);
-        if (n <= 0) clearInterval(this.contador);
-      }, 1000);
-    },
-    error: (err) => {
-      this.enviandoCodigo.set(false);
-      const texto = err.status === 0
-        ? 'No hay conexión con el servidor. Verifique su internet e intente nuevamente.'
-        : (typeof err.error === 'string' && err.error ? err.error : 'No se pudo enviar el código.');
-      this.mensajeRecuperar.set(texto);
-    }
-  });
-}
-  
-
-validarCodigo(): void {
-  this.authService.validarCodigo(this.correoRecuperar, this.codigoIngresado).subscribe({
-    next: () => {
-      this.codigoValido.set(true);
-      this.mensajeRecuperar.set('');
-    },
-    error: (err) => {
-      const texto = typeof err.error === 'string' ? err.error : 'Código incorrecto.';
-      this.mensajeRecuperar.set(texto);
-    }
-  });
-}
-
-//
+  validarCodigo(): void {
+    this.authService.validarCodigo(this.correoRecuperar, this.codigoIngresado).subscribe({
+      next: () => {
+        this.codigoValido.set(true);
+        this.mensajeRecuperar.set('');
+      },
+      error: (err) => {
+        const texto = typeof err.error === 'string' ? err.error : 'Código incorrecto.';
+        this.mensajeRecuperar.set(texto);
+      }
+    });
+  }
 
   volverAlLogin(): void {
     this.mostrarRecuperar.set(false);
@@ -187,32 +196,30 @@ validarCodigo(): void {
     this.nuevaSumaLogin();
   }
 
-  
   recuperarClave(): void {
-  if (this.claveNueva !== this.confirmarClaveNueva) {
-    this.mensajeRecuperar.set('Las claves no coinciden.');
-    return;
-  }
-  if (!this.tieneMinimo(this.claveNueva) || !this.tieneMayuscula(this.claveNueva)
-      || !this.tieneNumero(this.claveNueva) || !this.tieneSimbolo(this.claveNueva)) {
-    this.mensajeRecuperar.set('La clave no cumple los requisitos.');
-    return;
-  }
+    if (this.claveNueva !== this.confirmarClaveNueva) {
+      this.mensajeRecuperar.set('Las claves no coinciden.');
+      return;
+    }
+    if (!this.tieneMinimo(this.claveNueva) || !this.tieneMayuscula(this.claveNueva)
+        || !this.tieneNumero(this.claveNueva) || !this.tieneSimbolo(this.claveNueva)) {
+      this.mensajeRecuperar.set('La clave no cumple los requisitos.');
+      return;
+    }
 
-  this.authService.cambiarClave(this.correoRecuperar, this.codigoIngresado, this.claveNueva)
-    .subscribe({
-      next: () => {
-        this.mensajeRecuperar.set('Se realizó el cambio de clave. Ya puede iniciar sesión.');
-        this.claveNueva = '';
-        this.confirmarClaveNueva = '';
-      },
-      error: (err) => {
-        const texto = typeof err.error === 'string' ? err.error : 'No se pudo cambiar la clave.';
-        this.mensajeRecuperar.set(texto);
-      }
-    });
-}
-    
+    this.authService.cambiarClave(this.correoRecuperar, this.codigoIngresado, this.claveNueva)
+      .subscribe({
+        next: () => {
+          this.mensajeRecuperar.set('Se realizó el cambio de clave. Ya puede iniciar sesión.');
+          this.claveNueva = '';
+          this.confirmarClaveNueva = '';
+        },
+        error: (err) => {
+          const texto = typeof err.error === 'string' ? err.error : 'No se pudo cambiar la clave.';
+          this.mensajeRecuperar.set(texto);
+        }
+      });
+  }
 
   cerrarAvisoRecuperar(): void {
     const fueExito = this.mensajeRecuperar().includes('cambio de clave');
