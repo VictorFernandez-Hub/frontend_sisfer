@@ -156,7 +156,7 @@ export class UsuarioListaComponent implements OnInit {
       fecInicio: usuario.fecInicio,
       fecFin: usuario.fecFin,
       codigoRol: usuario.codigoRol,
-      estado: usuario.estado,
+      estado: usuario.estado === 'BLOQUEADO' ? '' : usuario.estado,
       clave: '',
       confirmarClave: ''
     });
@@ -180,6 +180,10 @@ export class UsuarioListaComponent implements OnInit {
     }
     if (!this.usuarioForm.value.codigoRol) {
       this.avisoGuardado.set('Seleccione el rol.');
+      return;
+    }
+    if (this.usuarioForm.value.estado !== 'ACTIVO' && this.usuarioForm.value.estado !== 'INACTIVO') {
+      this.avisoGuardado.set('Elija Activo o Inactivo. El bloqueo lo pone el sistema, no este formulario.');
       return;
     }
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {

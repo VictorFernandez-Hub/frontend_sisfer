@@ -20,8 +20,9 @@
   <dl class="datos-venta">
     <div><dt>Cliente</dt><dd>{{ d.cliente }}</dd></div>
     <div><dt>Documento</dt><dd>{{ d.tipoDocCliente }} {{ d.numDocCliente }}</dd></div>
+    <div><dt>Dirección</dt><dd>{{ d.direccionCliente || 'Sin dirección' }}</dd></div>
     <div><dt>Fecha</dt><dd>{{ d.fecVenta | date:'dd/MM/yyyy HH:mm' }}</dd></div>
-    <div><dt>Pago</dt><dd>{{ d.metodo }}</dd></div>
+    <div><dt>Pago</dt><dd>{{ d.metodo }}@if (d.codigoOperacion) { · {{ d.codigoOperacion.split('|').join(' · ') }} }</dd></div>
     <div><dt>Registró</dt><dd>{{ d.usuario }}</dd></div>
     @if (d.observacion) {
     <div class="dato-ancho"><dt>Observación</dt><dd>{{ d.observacion }}</dd></div>

@@ -18,6 +18,7 @@ export interface Producto {
   marca?: string;
   unidad?: string;
   unidad_codigo?: string;
+  unidad_entera?: boolean;
 
   // Precios en soles: no se piden al registrar (el de compra lo fija la primera compra)
   precio_compra?: number;
@@ -26,6 +27,7 @@ export interface Producto {
   // Stock: stock_actual es solo lectura (lo mueven compras, ventas y ajustes)
   stock_actual?: number;
   stock_inicial?: number; // Solo al crear: entra como ajuste y queda en el kardex
+  costo_apertura?: number; // Solo el formulario: se envía como precio_compra si hay stock inicial
   stock_minimo: number;
   nivel_stock?: NivelStock;
 

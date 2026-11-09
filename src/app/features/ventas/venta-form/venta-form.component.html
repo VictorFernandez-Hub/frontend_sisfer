@@ -1,4 +1,4 @@
-<div class="modal-header bg-light border-bottom py-3">
+<div class="modal-header venta-cabecera">
   <h5 class="modal-title fw-bold text-dark" id="modalVentaTitulo">
     <i class="bi bi-cart-plus text-warning me-2" aria-hidden="true"></i>{{ titulo }}
   </h5>
@@ -14,6 +14,16 @@
       <app-selector-busqueda idCampo="venCliente" placeholder="Buscar por nombre o documento..."
         [opciones]="opcionesCliente()" [valor]="idCliente" [invalido]="mostrarErrores() && !idCliente"
         (valorChange)="alElegirCliente($event)"></app-selector-busqueda>
+      @if (clienteSeleccionado(); as cliente) {
+      <div class="ficha-cliente">
+        <span class="ficha-inicial" aria-hidden="true">{{ cliente.nombres.charAt(0) }}</span>
+        <div>
+          <div class="fw-bold">{{ cliente.nombres }}</div>
+          <div>{{ cliente.tipo_doc }} {{ cliente.num_doc }}</div>
+          <div class="text-secondary">{{ cliente.direccion || 'Sin dirección registrada' }}</div>
+        </div>
+      </div>
+      }
       <div class="nota-fija mb-3">
         @if (faltaIdentificarComprador()) {
         <span class="text-danger">Boleta mayor a S/ 700.00: elija al cliente con sus datos.</span>
@@ -120,7 +130,8 @@
         <div class="row g-2">
           <div class="col-6 col-xl-12">
             <label for="venMetodo" class="form-label small fw-semibold mb-1">Medio de pago *</label>
-            <select id="venMetodo" class="form-select" [class.is-invalid]="mostrarErrores() && !idMetodo" [(ngModel)]="idMetodo">
+            <select id="venMetodo" class="form-select" [class.is-invalid]="mostrarErrores() && !idMetodo"
+              [(ngModel)]="idMetodo" (ngModelChange)="alCambiarMetodo()">
               <option [ngValue]="null">Seleccione</option>
               @for (m of metodos(); track m.id) {
               <option [ngValue]="m.id" [disabled]="m.codigo === 'CREDITO' && esClienteVarios()">{{ m.nombre }}</option>
@@ -128,36 +139,87 @@
             </select>
           </div>
           <div class="col-6 col-xl-12">
-            <label for="venComp" class="form-label small fw-semibold mb-1">Comprobante *</label>
-            <select id="venComp" class="form-select" [(ngModel)]="idTipoComp">
-              @for (t of tiposComp(); track t.id) {
-              <option [ngValue]="t.id" [disabled]="t.codigo === 'FAC' && clienteSeleccionado()?.tipo_doc !== 'RUC'">
-                {{ t.nombre }}
-              </option>
-              }
-            </select>
-            <div class="nota-fija text-secondary">La factura requiere un cliente con RUC.</div>
+            <label class="form-label small fw-semibold mb-1">Comprobante</label>
+            <div class="form-control bg-light">{{ nombreComprobante() }}</div>
+            <div class="nota-fija text-secondary">Se elige solo: DNI es boleta, RUC es factura.</div>
           </div>
+          @if (esBilletera()) {
+          <div class="col-12">
+            <span class="d-none">{{ avisoQr() }}</span>
+            <div class="billetera" [class.yape]="codigoMetodo() === 'YAPE'" [class.plin]="codigoMetodo() === 'PLIN'">
+              <div class="billetera-marca">{{ codigoMetodo() }}</div>
+              @if (!celularCobro) {
+              <p class="mb-0">Falta el celular. El administrador lo escribe en Cobros.</p>
+              } @else {
+              <div class="billetera-monto">S/ {{ total() | number:'1.2-2' }}</div>
+              <div class="billetera-cel">Celular {{ celularCobro }}</div>
+              @if (qrUrl) { <img class="billetera-qr" [src]="qrUrl" alt="Código para mostrar al cliente" width="168" height="168"> }
+              <p class="billetera-ayuda">Muestre esta pantalla al cliente. Cuando ya pagó, escriba el código de operación.</p>
+              }
+            </div>
+            <label for="venOperacion" class="form-label small fw-semibold mb-1 mt-2">Código de operación *</label>
+            <input id="venOperacion" type="text" maxlength="40" class="form-control"
+              [class.is-invalid]="mostrarErrores() && codigoOperacion.trim().length < 4"
+              placeholder="Ejemplo: 123456" [(ngModel)]="codigoOperacion">
+          </div>
+          }
+          @if (esTransferencia()) {
+          <div class="col-12">
+            @if (cuentas.length === 0) {
+            <p class="small text-danger mb-0">Todavía no hay cuentas. El administrador las escribe en Cobros.</p>
+            } @else {
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              @for (cuenta of cuentas; track cuenta.banco) {
+              <button type="button" class="banco-chip" [ngClass]="cuenta.banco.toLowerCase()"
+                [class.activo]="bancoElegido === cuenta.banco" (click)="bancoElegido = cuenta.banco">
+                {{ nombreBanco(cuenta.banco) }}
+              </button>
+              }
+            </div>
+            @if (cuentaElegida(); as cuenta) {
+            <div class="banco-ficha" [ngClass]="cuenta.banco.toLowerCase()">
+              <header>
+                <span class="emblema">{{ inicialesBanco(cuenta.banco) }}</span>
+                {{ nombreBanco(cuenta.banco) }}
+              </header>
+              <div class="banco-dato">
+                <span>Número de cuenta</span>
+                <strong>{{ cuenta.numeroCuenta }}</strong>
+              </div>
+              <div class="banco-dato">
+                <span>CCI</span>
+                <strong>{{ cuenta.cci }}</strong>
+              </div>
+            </div>
+            }
+            <label for="venOperacionBanco" class="form-label small fw-semibold mb-1 mt-2">Código de operación *</label>
+            <input id="venOperacionBanco" type="text" maxlength="30" class="form-control"
+              [class.is-invalid]="mostrarErrores() && codigoOperacion.trim().length < 4"
+              placeholder="El código que entrega el banco" [(ngModel)]="codigoOperacion">
+            }
+          </div>
+          }
         </div>
 
-        <!-- Siempre ocupa su lugar: con otros medios de pago solo se desactiva -->
+        @if (pagoEnEfectivo()) {
         <div class="row g-2 mt-1 align-items-start">
           <div class="col-7">
             <label for="venRecibido" class="form-label small fw-semibold mb-1">Recibido (S/)</label>
             <div class="input-group">
               <input id="venRecibido" type="number" min="0" step="0.10" class="form-control text-end px-2"
-                [class.is-invalid]="recibidoInsuficiente()" [disabled]="!pagoEnEfectivo()" [(ngModel)]="recibido">
-              <button type="button" class="btn btn-outline-secondary px-2" [disabled]="!pagoEnEfectivo()"
-                title="Recibió el monto exacto" (click)="montoExacto()">Exacto</button>
+                [class.is-invalid]="recibidoInsuficiente()" [(ngModel)]="recibido">
+              <button type="button" class="btn btn-outline-secondary px-2" title="Recibió el monto exacto"
+                (click)="montoExacto()">Exacto</button>
             </div>
           </div>
           <div class="col-5 text-end">
             <span class="form-label small fw-semibold mb-1 d-block">Vuelto (S/)</span>
             <div class="vuelto fw-bold" [class.text-danger]="recibidoInsuficiente()">
-              {{ pagoEnEfectivo() && recibido !== null ? (vuelto() | number:'1.2-2') : '-' }}
+              {{ recibido !== null ? (vuelto() | number:'1.2-2') : '-' }}
             </div>
           </div>
         </div>
+        }
 
         <label for="venObs" class="form-label small fw-semibold mt-3 mb-1">
           Observación {{ hayCambioDePrecio() ? '*' : '' }}
@@ -193,11 +255,14 @@
     }
   </div>
   <div class="d-flex flex-wrap justify-content-end gap-2">
-    <button type="button" class="btn btn-light border" [disabled]="guardando()" (click)="cancelar.emit()">Cancelar</button>
-    <button type="button" class="btn btn-outline-primary" [disabled]="guardando()"
-      title="Guarda una proforma: el stock todavía no cambia" (click)="guardarBorrador()">
+    <button type="button" class="btn btn-venta cancelar" [disabled]="guardando()" (click)="cancelar.emit()">Cancelar</button>
+    <button type="button" class="btn btn-venta borrador" [disabled]="guardando()"
+      title="Guarda la venta sin descontar el stock" (click)="guardarBorrador()">
       Guardar borrador
     </button>
+    @if (esTarjeta()) {
+    <button type="button" class="btn btn-success" [disabled]="guardando()" (click)="iniciarPos()">Cobrar con tarjeta</button>
+    } @else {
     <button type="button" class="btn btn-success d-flex align-items-center gap-2" [disabled]="guardando()"
       title="Descuenta el stock y emite el comprobante" (click)="pedirCobro()">
       @if (guardando()) {
@@ -207,8 +272,27 @@
       }
       Cobrar
     </button>
+    }
   </div>
 </div>
+
+@if (faseTarjeta !== 'idle') {
+<div class="pos-fondo" role="dialog" aria-live="polite">
+  <div class="pos-ventana">
+    @if (faseTarjeta === 'esperando') {
+    <div class="pos-tarjeta" aria-hidden="true"></div>
+    <h3 class="fw-bold mt-3">Pase la tarjeta por el POS</h3>
+    <p class="text-secondary mb-1">Espere a que el equipo confirme el pago.</p>
+    <div class="pos-cuenta">{{ segundosTarjeta }}</div>
+    <button type="button" class="btn btn-light mt-3" (click)="abortarPos()">Cancelar</button>
+    } @else {
+    <i class="bi bi-check-circle-fill pos-listo" aria-hidden="true"></i>
+    <h3 class="fw-bold mt-3">Pago realizado</h3>
+    <p class="text-secondary mb-0">Se está cerrando la venta.</p>
+    }
+  </div>
+</div>
+}
 
 @if (dialogo(); as d) {
 <app-venta-dialogo [datos]="d" (aceptar)="cobrar()" (cancelar)="dialogo.set(null)"></app-venta-dialogo>

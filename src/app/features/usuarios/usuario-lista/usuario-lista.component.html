@@ -178,11 +178,17 @@
   }
 }
 
+              @if (usuarioParaEditar()?.estado === 'BLOQUEADO') {
+              <div class="alert alert-warning py-2 small">
+                Esta cuenta está bloqueada por intentos fallidos. Elija Activo para rehabilitarla.
+                El sistema la vuelve a bloquear si fallan tres ingresos.
+              </div>
+              }
               <div class="form-floating mb-3">
                 <select class="form-select" id="estadoInput" formControlName="estado">
+                  <option value="" disabled>Seleccione...</option>
                   <option value="ACTIVO">ACTIVO</option>
                   <option value="INACTIVO">INACTIVO</option>
-                  <option value="BLOQUEADO">BLOQUEADO</option>
                 </select>
                 <label for="estadoInput">Estado de Cuenta</label>
               </div>

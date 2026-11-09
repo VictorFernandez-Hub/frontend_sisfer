@@ -1,0 +1,67 @@
+<div class="container py-4 cobros">
+  <header class="cobros-titulo">
+    <h2>Datos para cobrar</h2>
+  </header>
+
+  @if (error()) {
+  <div class="alert alert-danger py-2">{{ error() }}</div>
+  }
+
+  <section class="cobros-bloque">
+    <h5>Celular de Yape y Plin</h5>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <input class="form-control cobros-celular" maxlength="9" inputmode="numeric" placeholder="9 números"
+        [(ngModel)]="celular">
+      <button type="button" class="btn cobros-btn" (click)="guardarCelular()">Guardar celular</button>
+    </div>
+  </section>
+
+  <section class="cobros-bloque">
+    <h5>Cuentas para transferencia</h5>
+    <div class="row g-3">
+      @for (cuenta of cuentas(); track cuenta.banco) {
+      <div class="col-md-6">
+        <article class="banco" [ngClass]="claseBanco(cuenta.banco)">
+          <header>{{ nombreBanco(cuenta.banco) }}</header>
+          <div class="banco-cuerpo">
+            <label class="form-label small mb-1">Número de cuenta</label>
+            <input class="form-control mb-2" [(ngModel)]="cuenta.numeroCuenta">
+            <label class="form-label small mb-1">CCI (interbancario)</label>
+            <input class="form-control mb-2" [(ngModel)]="cuenta.cci">
+            <button type="button" class="btn cobros-btn" (click)="guardarCuenta(cuenta)">Guardar</button>
+          </div>
+        </article>
+      </div>
+      }
+    </div>
+  </section>
+
+  <section class="cobros-bloque">
+    <h5>Medios que se ofrecen al cobrar</h5>
+    <ul class="list-group list-group-flush">
+      @for (metodo of metodos(); track metodo.id) {
+      <li class="list-group-item medio d-flex justify-content-between align-items-center">
+        <span>{{ metodo.nombre }}</span>
+        @if (metodo.codigo === 'EFECTIVO') {
+        <span class="badge text-bg-success">Siempre activo</span>
+        } @else {
+        <button type="button" class="btn btn-sm" [class.btn-outline-danger]="metodo.estado === 'ACTIVO'"
+          [class.btn-outline-success]="metodo.estado === 'INACTIVO'" (click)="cambiarMetodo(metodo)">
+          {{ metodo.estado === 'ACTIVO' ? 'Ocultar' : 'Mostrar' }}
+        </button>
+        }
+      </li>
+      }
+    </ul>
+  </section>
+</div>
+
+@if (aviso()) {
+<div class="cobros-aviso" role="dialog" aria-modal="true">
+  <div class="cobros-aviso-caja">
+    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+    <p>{{ aviso() }}</p>
+    <button type="button" class="btn cobros-btn px-4" (click)="aviso.set('')">Listo</button>
+  </div>
+</div>
+}

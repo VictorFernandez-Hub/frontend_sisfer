@@ -4,6 +4,243 @@
 }
 
 /* Espacio fijo para avisos cortos: aparecer o desaparecer no cambia la altura */
+.billetera {
+  padding: 0.9rem 0.8rem 0.75rem;
+  border-radius: 16px;
+  color: #fff;
+  text-align: center;
+}
+
+.billetera.yape { background: #742284; }
+.billetera.plin { background: #00a99d; }
+
+.billetera-marca {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.billetera-monto {
+  margin-top: 0.15rem;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.billetera-cel {
+  opacity: 0.92;
+  font-size: 0.9rem;
+}
+
+.billetera-qr {
+  margin-top: 0.55rem;
+  padding: 6px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.billetera-ayuda {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+
+.banco-chip {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  color: #fff;
+  font-weight: 700;
+  opacity: 0.72;
+}
+
+.banco-chip:hover,
+.banco-chip.activo {
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(255, 165, 0, 0.45);
+}
+
+.banco-chip.bcp { background: #003da5; }
+.banco-chip.bbva { background: #072146; }
+.banco-chip.interbank { background: #00a651; }
+.banco-chip.scotiabank { background: #ec1c24; }
+
+.banco-ficha {
+  overflow: hidden;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+}
+
+.banco-ficha header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.8rem;
+  color: #fff;
+  font-weight: 800;
+}
+
+.emblema {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 0.35rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.banco-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.banco-chip .emblema {
+  min-width: 1.7rem;
+  height: 1.7rem;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.ficha-cliente {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #eef0f3;
+  border-left: 4px solid #ffa500;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ficha-inicial {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: #fff4e0;
+  color: #9a6200;
+  font-weight: 800;
+}
+
+.linea {
+  padding: 0.35rem 0.25rem;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.linea:hover {
+  background: #fff8eb;
+}
+
+.btn-venta {
+  min-width: 8.5rem;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.btn-venta.cancelar {
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  color: #344054;
+}
+
+.btn-venta.cancelar:hover {
+  background: #f8f9fb;
+}
+
+.btn-venta.borrador {
+  background: #fff;
+  border: 1px solid #ffa500;
+  color: #9a6200;
+}
+
+.btn-venta.borrador:hover {
+  background: #fff4e0;
+}
+
+.banco-ficha.bcp header { background: #003da5; }
+.banco-ficha.bbva header { background: #072146; }
+.banco-ficha.interbank header { background: #00a651; }
+.banco-ficha.scotiabank header { background: #ec1c24; }
+
+.banco-dato {
+  padding: 0.55rem 0.8rem 0.15rem;
+}
+
+.banco-dato span {
+  display: block;
+  color: #667085;
+  font-size: 0.75rem;
+}
+
+.banco-dato strong {
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.banco-ficha .banco-dato:last-child {
+  padding-bottom: 0.7rem;
+}
+
+.pos-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  background: rgba(17, 24, 39, 0.55);
+}
+
+.pos-ventana {
+  width: min(420px, 92vw);
+  padding: 2rem 1.5rem;
+  border-radius: 18px;
+  background: #fff;
+  text-align: center;
+}
+
+.pos-tarjeta {
+  width: 88px;
+  height: 56px;
+  margin: 0 auto;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1f2937, #ffa500);
+  animation: pos-pasa 1.4s ease-in-out infinite;
+}
+
+.pos-cuenta {
+  font-size: 2.4rem;
+  font-weight: 800;
+}
+
+.pos-listo {
+  color: #157347;
+  font-size: 3rem;
+}
+
+@keyframes pos-pasa {
+  0% { transform: translateX(-28px); opacity: 0.4; }
+  50% { transform: translateX(28px); opacity: 1; }
+  100% { transform: translateX(-28px); opacity: 0.4; }
+}
+
+.venta-cabecera {
+  background: #fff;
+  border-bottom: 0;
+  border-left: 6px solid #ffa500;
+  padding: 0.9rem 1.1rem;
+}
+
+.zona-cliente {
+  margin-bottom: 0.75rem;
+}
+
 .nota-fija {
   min-height: 1.35rem;
   padding-top: 0.15rem;
@@ -80,8 +317,10 @@ input.form-control.text-end.is-invalid {
   position: sticky;
   top: 1rem;
   padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 0.5rem;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
 }
 
 .vuelto {
@@ -96,7 +335,10 @@ input.form-control.text-end.is-invalid {
 }
 
 .total-cobrar {
-  margin-top: 0.25rem;
+  margin-top: 0.45rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  background: #fff4e0;
   font-size: 1.35rem;
 }
 

@@ -47,6 +47,7 @@ export interface VentaDetalle {
   direccionCliente: string;
   idMetodo: number;
   metodo: string;
+  codigoOperacion: string;
   totSubtotal: number;
   totIgv: number;
   totTotal: number;
@@ -62,6 +63,7 @@ export interface VentaRequest {
   idCliente: number;
   idMetodo: number;
   observacion: string;
+  codigoOperacion: string;
   lineas: { idProducto: number; cantidad: number; precioUnit: number | null }[];
 }
 
