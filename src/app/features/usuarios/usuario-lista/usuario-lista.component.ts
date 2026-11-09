@@ -14,6 +14,7 @@ declare var bootstrap: any;
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, BuscadorComponent],
   templateUrl: './usuario-lista.component.html',
+  styleUrls: ['./usuario-lista.component.css']
 })
 export class UsuarioListaComponent implements OnInit {
   private usuarioService = inject(UsuarioService);

@@ -22,6 +22,7 @@ export class NavbarComponent implements OnInit {
 
   isMenuOpen = signal<boolean>(false);
   username = this.authService.usuarioActual;
+  userRoleName = signal<string>('');
   private modulosDelRol = signal<string[]>([]);
 
   //CONFIGURACION DE ROLES PARA QUE PUEDAN VER O MODIFCIAR

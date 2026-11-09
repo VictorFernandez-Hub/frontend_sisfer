@@ -37,3 +37,16 @@
   border-color: #FFA500;
   filter: brightness(1.2);
 }
+
+/* Botón de cerrar sesión personalizado en tono naranja */
+.btn-orange-logout {
+  background-color: #FFA500 !important;
+  border-color: #FFA500 !important;
+  color: #ffffff !important;
+}
+
+.btn-orange-logout:hover {
+  background-color: #e09400 !important;
+  border-color: #e09400 !important;
+  color: #ffffff !important;
+}

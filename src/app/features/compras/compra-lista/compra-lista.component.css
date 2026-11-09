@@ -6,3 +6,8 @@
 .select-producto {
   min-width: 260px;
 }
+
+.btn-naranja {
+  background-color: #f97316;
+  border-color: #f97316;
+}

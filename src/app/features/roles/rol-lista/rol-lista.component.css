@@ -1,0 +1,10 @@
+.btn-naranja {
+  background-color: #f97316;
+  border-color: #f97316;
+}
+
+.btn-naranja:hover {
+  background-color: #ea580c; /* Un tono ligeramente más oscuro para el hover */
+  border-color: #ea580c;
+  color: #ffffff;
+}

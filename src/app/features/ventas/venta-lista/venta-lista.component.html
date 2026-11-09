@@ -11,13 +11,13 @@
 } @else {
 
 <div class="container-fluid px-4 mt-4 d-flex flex-wrap gap-2">
-  <button type="button" class="btn btn-light ms-auto d-flex align-items-center gap-2 shadow-sm"
-    [disabled]="cargando()" (click)="cargarVentas()">
+  <button type="button" class="btn btn-light ms-auto d-flex align-items-center gap-2 shadow-sm" [disabled]="cargando()"
+    (click)="cargarVentas()">
     <i class="bi bi-arrow-clockwise" [class.girando]="cargando()" aria-hidden="true"></i>
     <span>Actualizar</span>
   </button>
   @if (puedeRegistrar) {
-  <button type="button" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
+  <button type="button" class="btn text-white d-flex align-items-center gap-2 shadow-sm btn-naranja"
     [disabled]="!catalogosListos()" (click)="nuevaVenta()">
     <i class="bi bi-plus-lg" aria-hidden="true"></i>
     <span>Nueva venta</span>
@@ -78,7 +78,8 @@
         @for (c of cajaPorMetodo(); track c.metodo) {
         <div>
           <div class="fw-bold">S/ {{ c.total | number:'1.2-2' }}</div>
-          <div class="small text-secondary">{{ c.metodo }} · {{ c.ventas }} {{ c.ventas === 1 ? 'venta' : 'ventas' }}</div>
+          <div class="small text-secondary">{{ c.metodo }} · {{ c.ventas }} {{ c.ventas === 1 ? 'venta' : 'ventas' }}
+          </div>
         </div>
         } @empty {
         <div class="text-secondary small align-self-center">Sin cobros en estas ventas.</div>
@@ -108,7 +109,8 @@
         @if (errorFechas()) {
         {{ errorFechas() }}
         } @else {
-        {{ ventasFiltradas().length }} {{ ventasFiltradas().length === 1 ? 'venta' : 'ventas' }} {{ descripcionPeriodo() }}
+        {{ ventasFiltradas().length }} {{ ventasFiltradas().length === 1 ? 'venta' : 'ventas' }} {{ descripcionPeriodo()
+        }}
         }
       </span>
     </div>
@@ -185,7 +187,8 @@
                   (click)="descargarDesdeFila(v)">
                   <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="verDetalle(v)">Ver detalle</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="verDetalle(v)">Ver
+                  detalle</button>
               </div>
             </td>
           </tr>
@@ -210,8 +213,8 @@
 </div>
 
 <!-- ===================== VENTANA: NUEVA VENTA / EDITAR BORRADOR / DETALLE ===================== -->
-<div #ventanaVenta class="modal fade" id="modalVenta" tabindex="-1" aria-labelledby="modalVentaTitulo" aria-hidden="true"
-  data-bs-backdrop="static" data-bs-keyboard="false">
+<div #ventanaVenta class="modal fade" id="modalVenta" tabindex="-1" aria-labelledby="modalVentaTitulo"
+  aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-xl">
     <div class="modal-content border-0 shadow-lg">
       @if (vista() === 'form') {

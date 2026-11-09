@@ -1,0 +1,17 @@
+/* Contenedor de búsqueda moderno en cápsula */
+.search-bar-container {
+  transition: all 0.25s ease-in-out;
+  border: 1px solid #dee2e6 !important;
+}
+
+/* Efecto al hacer clic o escribir dentro de la barra (brillo con tu color #FFA500) */
+.search-bar-container:focus-within {
+  border-color: #FFA500 !important;
+  box-shadow: 0 0 0 0.25rem rgba(255, 165, 0, 0.15) !important;
+}
+
+/* Ajuste de tipografía e iconos en el input */
+.search-bar-container .form-control::placeholder {
+  color: #adb5bd;
+  font-weight: 400;
+}
