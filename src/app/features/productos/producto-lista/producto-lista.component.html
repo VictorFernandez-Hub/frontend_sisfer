@@ -20,8 +20,13 @@
   </button>
 
   @if (puedeGestionar()) {
-  <button type="button" class="btn text-white ms-auto d-flex align-items-center gap-2 shadow-sm btn-naranja"
-    data-bs-toggle="modal" data-bs-target="#modalRegistroPro" (click)="prepararNuevo()">
+  <button type="button" class="btn btn-light ms-auto d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal"
+    data-bs-target="#modalCatalogos" (click)="abrirCatalogos()">
+    <i class="bi bi-tags" aria-hidden="true"></i>
+    <span>Categorías, marcas y unidades</span>
+  </button>
+  <button type="button" class="btn text-white d-flex align-items-center gap-2 shadow-sm btn-naranja" data-bs-toggle="modal"
+    data-bs-target="#modalRegistroPro" (click)="prepararNuevo()">
     <i class="bi bi-box-seam" aria-hidden="true"></i>
     <span>Agregar Producto</span>
   </button>
@@ -300,9 +305,9 @@
               <div class="row g-2">
                 <div class="col-6">
                   <div class="form-floating mb-1">
-                    <input type="number" class="form-control text-end" formControlName="stock_inicial" min="0"
-                      step="any" [class.is-invalid]="esInvalido('stock_inicial')" />
-                    <label>Stock actual *</label>
+                    <input type="number" class="form-control text-end" formControlName="stock_inicial" min="0" step="any"
+                      [class.is-invalid]="esInvalido('stock_inicial')" />
+                    <label>{{ productoParaEditar() ? 'Stock actual *' : 'Stock inicial' }}</label>
                   </div>
                 </div>
                 <div class="col-6">
@@ -317,14 +322,30 @@
                 @if (productoParaEditar()) {
                 <i class="bi bi-lock me-1"></i>El stock actual solo cambia con compras, ventas o ajustes.
                 } @else {
-                <i class="bi bi-info-circle me-1"></i>Queda registrado en el kardex como stock inicial.
+                <i class="bi bi-info-circle me-1"></i>Deje 0 si todavía no hay mercadería: el stock sube al registrar la compra. Si ya hay unidades en el almacén, escriba cuántas y después cuánto costaron.
                 }
               </div>
+              @if (muestraCostoApertura()) {
+              <div class="form-floating mb-3">
+                <input type="number" class="form-control text-end" formControlName="costo_apertura" min="0.01" step="0.01" />
+                <label>Costo de apertura con IGV (S/) *</label>
+              </div>
+              }
 
               @if (stockInicialBajo()) {
               <div class="alert alert-warning py-2 small d-flex align-items-center gap-2">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 El producto empezará con alerta de stock mínimo.
+              </div>
+              }
+
+              @if (productoParaEditar()) {
+              <div class="form-floating mb-1">
+                <input type="text" class="form-control text-end bg-light" [value]="precioCompraActual() | number:'1.2-2'" disabled />
+                <label>Costo promedio (S/)</label>
+              </div>
+              <div class="small text-muted mb-3">
+                <i class="bi bi-lock me-1"></i>Lo fijan las compras. En esta pantalla no se edita.
               </div>
               }
 
@@ -336,14 +357,13 @@
               <div class="small mb-3" [class.text-danger]="esInvalido('precio_venta') || precioBajoCosto()"
                 [class.text-muted]="!(esInvalido('precio_venta') || precioBajoCosto())">
                 @if (precioBajoCosto()) {
-                <i class="bi bi-exclamation-circle me-1"></i>No puede ser menor al último costo (S/ {{
-                precioCompraActual() | number:'1.2-2' }}).
+                <i class="bi bi-exclamation-circle me-1"></i>No puede ser menor al costo promedio (S/ {{ precioCompraActual() | number:'1.2-2' }}).
                 } @else if (esInvalido('precio_venta')) {
                 <i class="bi bi-exclamation-circle me-1"></i>Ingrese un monto válido, con máximo 2 decimales.
                 } @else if (!puedeCambiarPrecio()) {
                 <i class="bi bi-lock me-1"></i>Solo el administrador del negocio fija el precio de venta.
                 } @else {
-                <i class="bi bi-info-circle me-1"></i>Precio al público con IGV. Es el que se cobra en Ventas.
+                <i class="bi bi-info-circle me-1"></i>Es lo que paga el cliente. Lo escribe el administrador y no puede ser menor de lo que costó comprarlo.
                 }
               </div>
 
@@ -368,3 +388,137 @@
     </div>
   </div>
 </div>
+
+@if (puedeGestionar()) {
+<div class="modal fade" id="modalCatalogos" tabindex="-1" aria-labelledby="tituloCatalogos" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content catalogo-modal">
+      <div class="modal-header border-0 pb-0">
+        <div>
+          <h5 class="modal-title fw-bold" id="tituloCatalogos">Catálogos del producto</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        @if (avisoCatalogo) {
+        <div class="alert alert-success py-2 small d-flex align-items-center gap-2" role="status">
+          <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+          <span>{{ avisoCatalogo }}</span>
+        </div>
+        }
+        @if (errorAlta) {
+        <div class="alert alert-danger py-2 small d-flex align-items-center gap-2" role="alert">
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+          <span>{{ errorAlta }}</span>
+        </div>
+        }
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <section class="catalogo-card">
+              <header class="catalogo-card-head">
+                <span class="catalogo-icono" aria-hidden="true"><i class="bi bi-folder2"></i></span>
+                <div>
+                  <h6 class="mb-0">Categorías</h6>
+                  <span class="small text-secondary">{{ categoriasTodas().length }} registradas</span>
+                </div>
+              </header>
+              <div class="catalogo-alta">
+                <input type="text" class="form-control" maxlength="80" placeholder="Nueva categoría" aria-label="Nueva categoría"
+                  [(ngModel)]="nombreCategoria" [ngModelOptions]="{standalone: true}">
+                <button type="button" class="btn catalogo-btn" [disabled]="guardandoAlta()" (click)="guardarAlta('categoria')">
+                  <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar
+                </button>
+              </div>
+              <ul class="catalogo-lista">
+                @for (c of categoriasTodas(); track c.id) {
+                <li class="catalogo-item" [class.inactivo]="c.estado === 'INACTIVO'">
+                  <span class="catalogo-nombre">{{ c.nombre }}</span>
+                  <button type="button" class="btn btn-sm catalogo-estado" [class.activar]="c.estado === 'INACTIVO'" (click)="cambiarEstadoCatalogo('categorias', c)">
+                    {{ c.estado === 'INACTIVO' ? 'Activar' : 'Inactivar' }}
+                  </button>
+                </li>
+                }
+              </ul>
+            </section>
+          </div>
+          <div class="col-lg-4">
+            <section class="catalogo-card">
+              <header class="catalogo-card-head">
+                <span class="catalogo-icono" aria-hidden="true"><i class="bi bi-bookmark"></i></span>
+                <div>
+                  <h6 class="mb-0">Marcas</h6>
+                  <span class="small text-secondary">{{ marcasTodas().length }} registradas</span>
+                </div>
+              </header>
+              <div class="catalogo-alta">
+                <input type="text" class="form-control" maxlength="80" placeholder="Nueva marca" aria-label="Nueva marca"
+                  [(ngModel)]="nombreMarca" [ngModelOptions]="{standalone: true}">
+                <button type="button" class="btn catalogo-btn" [disabled]="guardandoAlta()" (click)="guardarAlta('marca')">
+                  <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar
+                </button>
+              </div>
+              <ul class="catalogo-lista">
+                @for (m of marcasTodas(); track m.id) {
+                <li class="catalogo-item" [class.inactivo]="m.estado === 'INACTIVO'">
+                  <span class="catalogo-nombre">{{ m.nombre }}</span>
+                  <button type="button" class="btn btn-sm catalogo-estado" [class.activar]="m.estado === 'INACTIVO'" (click)="cambiarEstadoCatalogo('marcas', m)">
+                    {{ m.estado === 'INACTIVO' ? 'Activar' : 'Inactivar' }}
+                  </button>
+                </li>
+                }
+              </ul>
+            </section>
+          </div>
+          <div class="col-lg-4">
+            <section class="catalogo-card">
+              <header class="catalogo-card-head">
+                <span class="catalogo-icono" aria-hidden="true"><i class="bi bi-rulers"></i></span>
+                <div>
+                  <h6 class="mb-0">Unidades</h6>
+                  <span class="small text-secondary">{{ unidadesTodas().length }} registradas</span>
+                </div>
+              </header>
+              <div class="catalogo-alta">
+                <div class="row g-2">
+                  <div class="col-4">
+                    <input type="text" class="form-control" maxlength="10" placeholder="GLN" aria-label="Código de la unidad"
+                      [(ngModel)]="codigoUnidad" [ngModelOptions]="{standalone: true}">
+                  </div>
+                  <div class="col-8">
+                    <input type="text" class="form-control" maxlength="40" placeholder="Nombre, ej. Galón" aria-label="Nombre de la unidad"
+                      [(ngModel)]="nombreUnidad" [ngModelOptions]="{standalone: true}">
+                  </div>
+                </div>
+                <div class="form-check mt-2 mb-0">
+                  <input class="form-check-input" type="checkbox" id="unidadEnteraLista" [(ngModel)]="enteraUnidad" [ngModelOptions]="{standalone: true}">
+                  <label class="form-check-label small" for="unidadEnteraLista">Se vende en cantidades enteras</label>
+                </div>
+                <button type="button" class="btn catalogo-btn w-100 mt-2" [disabled]="guardandoAlta()" (click)="guardarAlta('unidad')">
+                  <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar unidad
+                </button>
+              </div>
+              <ul class="catalogo-lista">
+                @for (u of unidadesTodas(); track u.id) {
+                <li class="catalogo-item" [class.inactivo]="u.estado === 'INACTIVO'">
+                  <span class="catalogo-nombre">
+                    <span class="catalogo-codigo">{{ u.codigo }}</span>
+                    {{ u.nombre }}
+                    @if (!u.entera) { <span class="catalogo-nota">con decimales</span> }
+                  </span>
+                  <button type="button" class="btn btn-sm catalogo-estado" [class.activar]="u.estado === 'INACTIVO'" (click)="cambiarEstadoCatalogo('unidades', u)">
+                    {{ u.estado === 'INACTIVO' ? 'Activar' : 'Inactivar' }}
+                  </button>
+                </li>
+                }
+              </ul>
+            </section>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 bg-white">
+        <button type="button" class="btn catalogo-btn px-4" data-bs-dismiss="modal">Listo</button>
+      </div>
+    </div>
+  </div>
+</div>
+}

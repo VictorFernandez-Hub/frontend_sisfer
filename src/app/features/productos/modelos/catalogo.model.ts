@@ -3,4 +3,6 @@ export interface Catalogo {
   id: number;
   codigo?: string | null; // Solo las unidades tienen código (UND, KG, M...)
   nombre: string;
+  estado?: 'ACTIVO' | 'INACTIVO';
+  entera?: boolean;
 }

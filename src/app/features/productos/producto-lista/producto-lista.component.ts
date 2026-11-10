@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
@@ -15,7 +16,7 @@ import { ProveedorService } from '../../proveedores/servicios/proveedor.service'
 @Component({
   selector: 'app-producto-lista',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BuscadorComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, BuscadorComponent],
   templateUrl: './producto-lista.component.html',
   styleUrls: ['./producto-lista.component.css']
 })
@@ -30,6 +31,18 @@ export class ProductoListaComponent implements OnInit {
   categorias = signal<Catalogo[]>([]);
   marcas = signal<Catalogo[]>([]);
   unidades = signal<Catalogo[]>([]);
+  categoriasTodas = signal<Catalogo[]>([]);
+  marcasTodas = signal<Catalogo[]>([]);
+  unidadesTodas = signal<Catalogo[]>([]);
+
+  nombreCategoria = '';
+  nombreMarca = '';
+  nombreUnidad = '';
+  codigoUnidad = '';
+  enteraUnidad = true;
+  errorAlta = '';
+  avisoCatalogo = '';
+  guardandoAlta = signal(false);
 
   productoParaEditar = signal<Producto | null>(null);
   cargando = signal<boolean>(false);
@@ -100,6 +113,7 @@ export class ProductoListaComponent implements OnInit {
       id_unidad: [null, [Validators.required]],
       id_proveedor: [null, [Validators.required]],
       stock_inicial: [0, [Validators.required, Validators.min(0)]],
+      costo_apertura: [0, [Validators.min(0)]],
       stock_minimo: [0, [Validators.required, Validators.min(0)]],
       // Precio al público en soles (incluye IGV). Es el que usa Ventas
       precio_venta: [0, [Validators.required, Validators.min(0), Validators.max(9999999999.99),
@@ -124,6 +138,81 @@ export class ProductoListaComponent implements OnInit {
   /** Sin precio, Ventas rechaza el producto. */
   sinPrecio(p: Producto): boolean {
     return !(Number(p.precio_venta) > 0);
+  }
+
+  guardarAlta(tipo: 'categoria' | 'marca' | 'unidad'): void {
+    const nombre = (tipo === 'categoria' ? this.nombreCategoria : tipo === 'marca' ? this.nombreMarca : this.nombreUnidad).trim();
+    const codigo = this.codigoUnidad;
+    const entera = this.enteraUnidad;
+    this.errorAlta = '';
+    this.avisoCatalogo = '';
+    if (!nombre) {
+      this.errorAlta = 'Indique el nombre.';
+      return;
+    }
+    this.guardandoAlta.set(true);
+    const pedido = tipo === 'categoria'
+      ? this.productoService.crearCategoria(nombre)
+      : tipo === 'marca'
+        ? this.productoService.crearMarca(nombre)
+        : this.productoService.crearUnidad(codigo, nombre, entera);
+    pedido.subscribe({
+      next: (creado) => {
+        this.guardandoAlta.set(false);
+        this.nombreCategoria = '';
+        this.nombreMarca = '';
+        this.nombreUnidad = '';
+        this.codigoUnidad = '';
+        const cual = tipo === 'categoria' ? 'La categoría' : tipo === 'marca' ? 'La marca' : 'La unidad';
+        this.avisoCatalogo = `${cual} "${creado.nombre}" ya quedó guardada. Puede cerrar con Listo.`;
+        this.cargarCatalogos();
+        this.cargarCatalogosTodos();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.guardandoAlta.set(false);
+        this.errorAlta = extraerMensajeError(err, 'No se pudo registrar.');
+      }
+    });
+  }
+
+  cambiarEstadoCatalogo(tipo: 'categorias' | 'marcas' | 'unidades', item: Catalogo): void {
+    const estado = item.estado === 'INACTIVO' ? 'ACTIVO' : 'INACTIVO';
+    this.productoService.cambiarEstadoCatalogo(tipo, item.id, estado).subscribe({
+      next: () => {
+        this.errorAlta = '';
+        this.avisoCatalogo = estado === 'INACTIVO'
+          ? `"${item.nombre}" quedó inactivo y ya no sale al crear un producto.`
+          : `"${item.nombre}" quedó activo.`;
+        this.cargarCatalogos();
+        this.cargarCatalogosTodos();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.errorMessage.set(extraerMensajeError(err, 'No se pudo cambiar el estado.'));
+      }
+    });
+  }
+
+  abrirCatalogos(): void {
+    this.avisoCatalogo = '';
+    this.errorAlta = '';
+    this.cargarCatalogosTodos();
+  }
+
+  cargarCatalogosTodos(): void {
+    forkJoin({
+      categorias: this.productoService.obtenerCategorias(true),
+      marcas: this.productoService.obtenerMarcas(true),
+      unidades: this.productoService.obtenerUnidades(true)
+    }).subscribe({
+      next: ({ categorias, marcas, unidades }) => {
+        this.categoriasTodas.set(categorias);
+        this.marcasTodas.set(marcas);
+        this.unidadesTodas.set(unidades);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.errorMessage.set(extraerMensajeError(err, 'No se pudieron cargar los catálogos.'));
+      }
+    });
   }
 
   private cargarCatalogos(): void {
@@ -234,8 +323,8 @@ export class ProductoListaComponent implements OnInit {
       id_proveedor: Number(v.id_proveedor),
       stock_minimo: Number(v.stock_minimo)
     };
-    // El precio de compra nunca se envía: lo fija la compra y el backend conserva el actual.
     delete producto.precio_compra;
+    delete producto.costo_apertura;
     // El precio de venta solo lo envía quien puede cambiarlo; si no, el backend conserva el actual
     if (this.puedeCambiarPrecio()) {
       producto.precio_venta = Number(v.precio_venta);
@@ -248,6 +337,14 @@ export class ProductoListaComponent implements OnInit {
       delete producto.stock_inicial; // El backend lo ignora al editar; no se envía
     } else {
       producto.stock_inicial = Number(v.stock_inicial);
+      if (producto.stock_inicial > 0 && !(Number(v.costo_apertura) > 0)) {
+        this.guardando.set(false);
+        this.errorFormulario.set('Si ingresa stock inicial, indique el costo de apertura. Si no lo conoce, deje el stock en 0 y regístrelo con una compra.');
+        return;
+      }
+      if (producto.stock_inicial > 0) {
+        producto.precio_compra = Number(v.costo_apertura);
+      }
     }
     const peticion = editando
       ? this.productoService.actualizarProducto(editando.id_producto!, producto)
@@ -292,10 +389,17 @@ export class ProductoListaComponent implements OnInit {
       id_unidad: null,
       id_proveedor: null,
       stock_inicial: this.productoParaEditar()?.stock_actual ?? 0,
+      costo_apertura: 0,
       stock_minimo: 0,
       precio_venta: Number(this.productoParaEditar()?.precio_venta ?? 0),
       estado: 'ACTIVO'
     });
+  }
+
+  /** Solo al crear, y solo si van a ingresar unidades: ahí el costo de apertura es obligatorio. */
+  muestraCostoApertura(): boolean {
+    if (this.productoParaEditar()) return false;
+    return Number(this.productoForm.get('stock_inicial')?.value) > 0;
   }
 
   /** El stock inicial ya quedó en el mínimo o por debajo: se avisa antes de guardar */

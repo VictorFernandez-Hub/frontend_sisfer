@@ -2,6 +2,66 @@
   max-width: 32rem;
 }
 
+.ventas-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  border-left: 6px solid #ffa500;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.ventas-barra h2 {
+  margin: 0;
+  color: #1f1f1f;
+  font-weight: 800;
+}
+
+.btn-venta-nueva {
+  background: #ffa500;
+  border: 0;
+  color: #1f1f1f;
+  font-weight: 700;
+}
+
+.btn-venta-nueva:hover {
+  background: #ffb11a;
+  color: #1f1f1f;
+}
+
+.tarjeta-resumen {
+  background: #fff;
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.tarjeta-resumen .card-body {
+  border-top: 4px solid #ffa500;
+}
+
+.col-lg-3:nth-child(2) .tarjeta-resumen .card-body { border-top-color: #157347; }
+.col-lg-3:nth-child(3) .tarjeta-resumen .card-body { border-top-color: #b58100; }
+.col-lg-3:nth-child(4) .tarjeta-resumen .card-body { border-top-color: #c2410c; }
+
+#tablaVentas thead th {
+  background: #1f1f1f;
+  color: #fff;
+  font-weight: 600;
+  border: 0;
+}
+
+#tablaVentas tbody tr {
+  transition: background 0.15s ease;
+}
+
+#tablaVentas tbody tr:hover {
+  background: #fff8eb;
+}
+
 .tarjeta-resumen {
   background: #fff;
 }

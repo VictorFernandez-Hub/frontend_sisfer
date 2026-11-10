@@ -74,6 +74,12 @@
         </li>
         }
 
+        @if (tieneRol(ROLES_COBROS) || tieneModulo('COBROS')) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/cobros" routerLinkActive="active">COBROS</a>
+          </li>
+        }
+
         @if (tieneRol(ROLES_INVENTARIO) || tieneModulo('INVENTARIO')) {
         <li class="nav-item">
           <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/inventario"

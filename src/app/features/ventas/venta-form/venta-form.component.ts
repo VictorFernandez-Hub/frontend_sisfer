@@ -1,4 +1,5 @@
-import { Component, OnInit, QueryList, ViewChildren, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren, computed, inject, input, output, signal } from '@angular/core';
+import * as QRCode from 'qrcode';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -7,6 +8,7 @@ import { Cliente } from '../../clientes/modelos/cliente.model';
 import { Producto } from '../../productos/modelos/producto.model';
 import { OpcionVenta, VentaDetalle, VentaRequest } from '../modelos/venta.model';
 import { VentaService } from '../servicios/venta.service';
+import { CobroService, CuentaBanco } from '../servicios/cobro.service';
 import { OpcionBusqueda, SelectorBusquedaComponent } from '../selector-busqueda/selector-busqueda.component';
 import { DatosDialogo, VentaDialogoComponent } from '../venta-dialogo/venta-dialogo.component';
 import { DOC_CLIENTE_VARIOS, IGV, TOPE_BOLETA_SIN_IDENTIFICAR, UNIDADES_ENTERAS, redondear, soles } from '../venta-reglas';
@@ -29,8 +31,9 @@ interface LineaForm {
   templateUrl: './venta-form.component.html',
   styleUrls: ['./venta-form.component.css']
 })
-export class VentaFormComponent implements OnInit {
+export class VentaFormComponent implements OnInit, OnDestroy {
   private readonly ventaService = inject(VentaService);
+  private readonly cobroService = inject(CobroService);
 
   clientes = input.required<Cliente[]>();
   productos = input.required<Producto[]>();
@@ -55,11 +58,20 @@ export class VentaFormComponent implements OnInit {
   idCliente: number | null = null;
   idMetodo: number | null = null;
   idTipoComp: number | null = null;
+  codigoOperacion = '';
   observacion = '';
   lineas: LineaForm[] = [];
   recibido: number | null = null;   // solo para calcular el vuelto en efectivo
+  celularCobro = '';
+  cuentas: CuentaBanco[] = [];
+  bancoElegido = '';
+  qrUrl = '';
+  faseTarjeta: 'idle' | 'esperando' | 'listo' = 'idle';
+  segundosTarjeta = 20;
 
   private siguienteClave = 1;
+  private qrTexto = '';
+  private timerPos: ReturnType<typeof setInterval> | null = null;
 
   opcionesCliente = computed<OpcionBusqueda[]>(() => this.clientes().map(c => ({
     id: Number(c.id_cliente),
@@ -87,6 +99,7 @@ export class VentaFormComponent implements OnInit {
     if (v) {
       this.idCliente = v.idCliente;
       this.idMetodo = v.idMetodo;
+      this.separarOperacion(v.codigoOperacion ?? '');
       this.observacion = v.observacion ?? '';
       this.lineas = v.lineas.map(l => ({
         clave: this.siguienteClave++,
@@ -103,6 +116,18 @@ export class VentaFormComponent implements OnInit {
     }
     this.sugerirComprobante();
     this.actualizarOcupados();
+    this.cobroService.datos().subscribe({
+      next: datos => {
+        this.celularCobro = datos.celular ?? '';
+        this.cuentas = datos.cuentas ?? [];
+        this.prepararQr();
+      },
+      error: () => { /* Sin estos datos igual se puede cobrar en efectivo. */ }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.cancelarPos();
   }
 
   // La venta casi siempre empieza por el producto: "Cliente varios" ya viene elegido
@@ -188,7 +213,9 @@ export class VentaFormComponent implements OnInit {
 
   // Martillos, paquetes y cajas se venden enteros; cable, kilos y litros admiten decimales
   cantidadEntera(linea: LineaForm): boolean {
-    return UNIDADES_ENTERAS.includes(this.productoDe(linea)?.unidad_codigo ?? 'UND');
+    const producto = this.productoDe(linea);
+    if (typeof producto?.unidad_entera === 'boolean') return producto.unidad_entera;
+    return UNIDADES_ENTERAS.includes(producto?.unidad_codigo ?? 'UND');
   }
 
   excedeStock(linea: LineaForm): boolean {
@@ -249,6 +276,126 @@ export class VentaFormComponent implements OnInit {
 
   pagoEnEfectivo(): boolean {
     return this.metodos().find(m => m.id === Number(this.idMetodo))?.codigo === 'EFECTIVO';
+  }
+
+  codigoMetodo(): string {
+    return this.metodos().find(m => m.id === Number(this.idMetodo))?.codigo ?? '';
+  }
+
+  nombreComprobante(): string {
+    return this.tiposComp().find(t => t.id === Number(this.idTipoComp))?.nombre ?? 'Boleta';
+  }
+
+  // Yape y Plin piden el código que muestra el celular del cliente
+  pagoConOperacion(): boolean {
+    const codigo = this.codigoMetodo();
+    return codigo === 'YAPE' || codigo === 'PLIN';
+  }
+
+  esBilletera(): boolean {
+    return this.pagoConOperacion();
+  }
+
+  esTransferencia(): boolean {
+    return this.codigoMetodo() === 'TRANSFERENCIA';
+  }
+
+  esTarjeta(): boolean {
+    return this.codigoMetodo() === 'TARJETA';
+  }
+
+  alCambiarMetodo(): void {
+    this.codigoOperacion = '';
+    this.bancoElegido = '';
+    this.cancelarPos();
+    this.prepararQr();
+    this.error.set('');
+  }
+
+  cuentaElegida(): CuentaBanco | undefined {
+    return this.cuentas.find(c => c.banco === this.bancoElegido);
+  }
+
+  inicialesBanco(banco: string): string {
+    if (banco === 'INTERBANK') return 'IBK';
+    if (banco === 'SCOTIABANK') return 'SBK';
+    return banco;
+  }
+
+  private separarOperacion(valor: string): void {
+    const partes = valor.split('|');
+    if (partes.length === 2) {
+      this.bancoElegido = partes[0];
+      this.codigoOperacion = partes[1];
+      return;
+    }
+    this.codigoOperacion = valor;
+  }
+
+  private referenciaPago(): string {
+    if (this.esTransferencia()) return `${this.bancoElegido}|${this.codigoOperacion.trim()}`;
+    if (this.esTarjeta()) return 'POS';
+    if (this.pagoConOperacion()) return this.codigoOperacion.trim();
+    return '';
+  }
+
+  nombreBanco(banco: string): string {
+    if (banco === 'INTERBANK') return 'Interbank';
+    if (banco === 'SCOTIABANK') return 'Scotiabank';
+    return banco;
+  }
+
+  avisoQr(): string {
+    this.prepararQr();
+    return '';
+  }
+
+  /** El código lleva el celular de la ferretería y el monto de esta venta. */
+  prepararQr(): void {
+    if (!this.esBilletera() || !this.celularCobro) {
+      this.qrUrl = '';
+      this.qrTexto = '';
+      return;
+    }
+    const texto = [
+      'Ferreteria La Solucion',
+      this.codigoMetodo(),
+      `Celular: ${this.celularCobro}`,
+      `Monto: S/ ${this.total().toFixed(2)}`
+    ].join('\n');
+    if (texto === this.qrTexto) return;
+    this.qrTexto = texto;
+    QRCode.toDataURL(texto, { width: 220, margin: 1 })
+      .then(url => this.qrUrl = url)
+      .catch(() => this.qrUrl = '');
+  }
+
+  iniciarPos(): void {
+    if (!this.armarDatos()) return;
+    this.cancelarPos();
+    this.faseTarjeta = 'esperando';
+    this.segundosTarjeta = 20;
+    this.timerPos = setInterval(() => {
+      this.segundosTarjeta -= 1;
+      if (this.segundosTarjeta <= 0) {
+        this.cancelarPos();
+        this.faseTarjeta = 'listo';
+        this.codigoOperacion = 'POS';
+        setTimeout(() => this.cobrar(), 1200);
+      }
+    }, 1000);
+  }
+
+  abortarPos(): void {
+    this.cancelarPos();
+    this.faseTarjeta = 'idle';
+    this.codigoOperacion = '';
+  }
+
+  private cancelarPos(): void {
+    if (this.timerPos) clearInterval(this.timerPos);
+    this.timerPos = null;
+    if (this.faseTarjeta === 'esperando') this.faseTarjeta = 'idle';
   }
 
   esFactura(idTipoComp: number | null): boolean {
@@ -360,6 +507,7 @@ export class VentaFormComponent implements OnInit {
         next: (v) => this.alCobrar(v),
         error: (err: HttpErrorResponse) => {
           this.guardando.set(false);
+          this.faseTarjeta = 'idle';
           this.error.set(extraerMensajeError(err, 'No se pudo cobrar la venta.'));
         }
       });
@@ -373,6 +521,7 @@ export class VentaFormComponent implements OnInit {
           next: (v) => this.alCobrar(v),
           error: (err: HttpErrorResponse) => {
             this.guardando.set(false);
+            this.faseTarjeta = 'idle';
             this.error.set(extraerMensajeError(err, 'No se pudo confirmar la venta.') +
               ` La venta ${borrador.numero} sigue en borrador.`);
           }
@@ -380,6 +529,7 @@ export class VentaFormComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.guardando.set(false);
+        this.faseTarjeta = 'idle';
         this.error.set(extraerMensajeError(err, 'No se pudo guardar la venta.'));
       }
     });
@@ -404,6 +554,18 @@ export class VentaFormComponent implements OnInit {
     }
     if (this.pagoACredito() && this.esClienteVarios()) {
       this.error.set('El crédito interno se da a un cliente identificado. Elija al cliente o cambie el medio de pago.');
+      return null;
+    }
+    if (this.pagoConOperacion() && this.codigoOperacion.trim().length < 4) {
+      this.error.set('Cuando el cliente ya pagó, escriba el código que muestra su celular.');
+      return null;
+    }
+    if (this.esTransferencia() && !this.bancoElegido) {
+      this.error.set('Elija el banco al que el cliente va a transferir.');
+      return null;
+    }
+    if (this.esTransferencia() && this.codigoOperacion.trim().length < 4) {
+      this.error.set('Escriba el número de operación de la transferencia.');
       return null;
     }
     for (const l of this.lineas) {
@@ -442,6 +604,7 @@ export class VentaFormComponent implements OnInit {
       idCliente: Number(this.idCliente),
       idMetodo: Number(this.idMetodo),
       observacion: this.observacion.trim(),
+      codigoOperacion: this.referenciaPago(),
       // El vendedor no envía precio: el backend usa el de la proforma o el de lista
       lineas: this.lineas.map(l => ({
         idProducto: Number(l.idProducto),

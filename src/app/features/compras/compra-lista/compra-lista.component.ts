@@ -141,16 +141,17 @@ export class CompraListaComponent implements OnInit {
     return this.redondear((Number(l.cantidad) || 0) * (Number(l.costoUnit) || 0));
   }
 
-  subtotal(): number {
+  // El costo escrito ya incluye IGV. El total es lo que se paga al proveedor.
+  total(): number {
     return this.redondear(this.lineas.reduce((acc, l) => acc + this.totalLinea(l), 0));
   }
 
-  igv(): number {
-    return this.redondear(this.subtotal() * IGV);
+  subtotal(): number {
+    return this.redondear(this.total() / (1 + IGV));
   }
 
-  total(): number {
-    return this.redondear(this.subtotal() + this.igv());
+  igv(): number {
+    return this.redondear(this.total() - this.subtotal());
   }
 
   guardarBorrador(): void {

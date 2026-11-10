@@ -72,14 +72,17 @@
             <th scope="col" class="text-end py-2">Stock actual</th>
             <th scope="col" class="text-end py-2">Mínimo</th>
             <th scope="col" class="text-end py-2">Falta</th>
-            <th scope="col" class="text-end py-2">Valor (S/)</th>
-            <th scope="col" class="py-2 pe-3">Nivel</th>
+            <th scope="col" class="text-end py-2">Valor (costo prom.)</th>
+            <th scope="col" class="py-2">Nivel</th>
+            @if (puedeAjustar) {
+            <th scope="col" class="py-2 pe-3">Ajuste</th>
+            }
           </tr>
         </thead>
         <tbody>
           @if (cargando()) {
           <tr>
-            <td colspan="9" class="text-center py-4 text-secondary">
+            <td [attr.colspan]="puedeAjustar ? 10 : 9" class="text-center py-4 text-secondary">
               <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
               Cargando inventario...
             </td>
@@ -101,7 +104,7 @@
               {{ faltanteDe(p) | number:'1.0-3' }}
             </td>
             <td class="text-end text-secondary">{{ valorDe(p) | number:'1.2-2' }}</td>
-            <td class="pe-3">
+            <td>
               <span class="badge py-1 px-2" [ngClass]="{
                   'bg-success-subtle text-success border border-success-subtle': nivelDe(p) === 'OK',
                   'bg-warning-subtle text-warning-emphasis border border-warning-subtle': nivelDe(p) === 'STOCK_MINIMO',
@@ -110,10 +113,15 @@
                 {{ textoNivel(p) }}
               </span>
             </td>
+            @if (puedeAjustar) {
+            <td class="pe-3">
+              <button type="button" class="btn btn-sm btn-outline-dark" (click)="abrirAjuste(p)">Ajustar</button>
+            </td>
+            }
           </tr>
           } @empty {
           <tr>
-            <td colspan="9" class="text-center py-5 text-secondary">
+            <td [attr.colspan]="puedeAjustar ? 10 : 9" class="text-center py-5 text-secondary">
               <i class="bi bi-box-seam fs-1 d-block mb-2" aria-hidden="true"></i>
               @if (productos().length === 0) {
               <span>Aún no hay productos en el inventario</span>
@@ -128,9 +136,10 @@
         @if (!cargando() && productos().length > 0) {
         <tfoot class="table-light">
           <tr>
-            <td colspan="7" class="text-end fw-semibold py-2">Valor total del inventario (al precio de compra):</td>
+            <td colspan="7" class="text-end fw-semibold py-2">Valor total del inventario (al costo promedio):</td>
             <td class="text-end fw-bold py-2">S/ {{ resumen().valorTotal | number:'1.2-2' }}</td>
             <td></td>
+            @if (puedeAjustar) { <td></td> }
           </tr>
         </tfoot>
         }
@@ -138,3 +147,50 @@
     </div>
   </div>
 </div>
+
+@if (productoAjuste; as p) {
+<div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3"
+  style="background: rgba(0,0,0,.45); z-index: 1050;">
+  <div class="card shadow border-0" style="width: min(480px, 100%);" role="dialog" aria-labelledby="tituloAjuste">
+    <div class="card-header bg-white fw-bold" id="tituloAjuste">
+      Ajustar {{ p.codigo }} — {{ p.nombre }}
+    </div>
+    <div class="card-body">
+      <p class="small text-secondary mb-3">
+        Stock actual: {{ p.stock_actual | number:'1.0-3' }} {{ p.unidad_codigo }}.
+        Esto no es una compra ni una venta: queda en el kardex como ajuste.
+      </p>
+      <label class="form-label small fw-semibold" for="ajMotivo">Motivo *</label>
+      <select id="ajMotivo" class="form-select mb-3" [(ngModel)]="motivoAjuste">
+        <option value="MERMA">Merma (se malogró o se perdió)</option>
+        <option value="HALLAZGO">Hallazgo (apareció mercadería)</option>
+        <option value="CORRECCION">Corrección de conteo</option>
+      </select>
+      @if (motivoAjuste === 'CORRECCION') {
+      <label class="form-label small fw-semibold" for="ajSentido">El conteo dice que *</label>
+      <select id="ajSentido" class="form-select mb-3" [(ngModel)]="sentidoCorreccion">
+        <option value="SALIDA">Faltan unidades</option>
+        <option value="ENTRADA">Sobran unidades</option>
+      </select>
+      }
+      <label class="form-label small fw-semibold" for="ajCantidad">Cantidad *</label>
+      <input id="ajCantidad" type="number" min="0.001" step="any" class="form-control mb-3" [(ngModel)]="cantidadAjuste">
+      @if (esEntrada()) {
+      <label class="form-label small fw-semibold" for="ajCosto">Costo unitario con IGV (S/) *</label>
+      <input id="ajCosto" type="number" min="0.01" step="0.01" class="form-control mb-3" [(ngModel)]="costoAjuste">
+      }
+      <label class="form-label small fw-semibold" for="ajObs">Por qué *</label>
+      <textarea id="ajObs" rows="2" maxlength="300" class="form-control" [(ngModel)]="observacionAjuste"></textarea>
+      @if (errorAjuste) {
+      <div class="alert alert-danger py-2 small mt-3 mb-0">{{ errorAjuste }}</div>
+      }
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-light" [disabled]="guardando()" (click)="cerrarAjuste()">Cancelar</button>
+      <button type="button" class="btn btn-dark" [disabled]="guardando()" (click)="confirmarAjuste()">
+        {{ guardando() ? 'Guardando...' : 'Confirmar ajuste' }}
+      </button>
+    </div>
+  </div>
+</div>
+}

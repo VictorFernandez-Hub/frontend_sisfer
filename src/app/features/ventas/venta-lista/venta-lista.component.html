@@ -10,23 +10,24 @@
 </div>
 } @else {
 
-<div class="container-fluid px-4 mt-4 d-flex flex-wrap gap-2">
-  <button type="button" class="btn btn-light ms-auto d-flex align-items-center gap-2 shadow-sm" [disabled]="cargando()"
-    (click)="cargarVentas()">
-    <i class="bi bi-arrow-clockwise" [class.girando]="cargando()" aria-hidden="true"></i>
-    <span>Actualizar</span>
-  </button>
-  @if (puedeRegistrar) {
-  <button type="button" class="btn text-white d-flex align-items-center gap-2 shadow-sm btn-naranja"
-    [disabled]="!catalogosListos()" (click)="nuevaVenta()">
-    <i class="bi bi-plus-lg" aria-hidden="true"></i>
-    <span>Nueva venta</span>
-  </button>
-  }
-</div>
-
-<div class="container-fluid mt-4">
-  <h2 class="text-white text-center mt-4 mb-3 fw-bold">Ventas</h2>
+<div class="container-fluid px-4 mt-4">
+  <header class="ventas-barra">
+    <h2>Ventas</h2>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-light border d-flex align-items-center gap-2"
+        [disabled]="cargando()" (click)="cargarVentas()">
+        <i class="bi bi-arrow-clockwise" [class.girando]="cargando()" aria-hidden="true"></i>
+        <span>Actualizar</span>
+      </button>
+      @if (puedeRegistrar) {
+      <button type="button" class="btn text-white d-flex align-items-center gap-2 shadow-sm btn-naranja"
+        [disabled]="!catalogosListos()" (click)="nuevaVenta()">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span>Nueva venta</span>
+      </button>
+      }
+    </div>
+  </header>
 
   <!-- ===================== RESUMEN: Confirmadas, En borrador y Anuladas filtran la tabla ===================== -->
   <div class="row g-3 mb-3">

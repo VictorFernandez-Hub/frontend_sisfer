@@ -28,6 +28,7 @@ export class RolListaComponent implements OnInit {
     { codigo: 'PRODUCTOS', nombre: 'Productos' },
     { codigo: 'PROVEEDORES', nombre: 'Proveedores' },
     { codigo: 'VENTAS', nombre: 'Ventas' },
+    { codigo: 'COBROS', nombre: 'Cobros' },
     { codigo: 'COMPRAS', nombre: 'Compras' },
     { codigo: 'INVENTARIO', nombre: 'Inventario' },
     { codigo: 'KARDEX', nombre: 'Kardex' },

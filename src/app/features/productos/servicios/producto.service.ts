@@ -46,16 +46,33 @@ export class ProductoService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, { withCredentials: true });
   }
 
-  // ----- Catálogos para los combos -----
-  obtenerCategorias(): Observable<Catalogo[]> {
-    return this.http.get<Catalogo[]>(`${this.apiUrl}/categorias`, { withCredentials: true });
+  // ----- Catálogos para los combos (solo activos) y para la lista completa -----
+  obtenerCategorias(todas = false): Observable<Catalogo[]> {
+    return this.http.get<Catalogo[]>(`${this.apiUrl}/categorias`, { params: { todas }, withCredentials: true });
   }
 
-  obtenerMarcas(): Observable<Catalogo[]> {
-    return this.http.get<Catalogo[]>(`${this.apiUrl}/marcas`, { withCredentials: true });
+  obtenerMarcas(todas = false): Observable<Catalogo[]> {
+    return this.http.get<Catalogo[]>(`${this.apiUrl}/marcas`, { params: { todas }, withCredentials: true });
   }
 
-  obtenerUnidades(): Observable<Catalogo[]> {
-    return this.http.get<Catalogo[]>(`${this.apiUrl}/unidades`, { withCredentials: true });
+  obtenerUnidades(todas = false): Observable<Catalogo[]> {
+    return this.http.get<Catalogo[]>(`${this.apiUrl}/unidades`, { params: { todas }, withCredentials: true });
+  }
+
+  crearCategoria(nombre: string): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/categorias`, { nombre }, { withCredentials: true });
+  }
+
+  crearMarca(nombre: string): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/marcas`, { nombre }, { withCredentials: true });
+  }
+
+  crearUnidad(codigo: string, nombre: string, entera: boolean): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/unidades`, { codigo, nombre, entera }, { withCredentials: true });
+  }
+
+  cambiarEstadoCatalogo(tipo: 'categorias' | 'marcas' | 'unidades', id: number, estado: 'ACTIVO' | 'INACTIVO'): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${tipo}/${id}/estado`, null,
+      { params: { estado }, withCredentials: true });
   }
 }
