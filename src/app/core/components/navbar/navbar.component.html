@@ -74,12 +74,6 @@
         </li>
         }
 
-        @if (tieneRol(ROLES_COBROS) || tieneModulo('COBROS')) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/cobros" routerLinkActive="active">COBROS</a>
-          </li>
-        }
-
         @if (tieneRol(ROLES_INVENTARIO) || tieneModulo('INVENTARIO')) {
         <li class="nav-item">
           <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/inventario"
@@ -115,24 +109,24 @@
         </li>
         }
 
-        @if (tieneRol(ROLES_USUARIOS) || tieneModulo('USUARIOS')) {
-        <li class="nav-item">
-          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/usuarios"
-            routerLinkActive="active">USUARIOS</a>
-        </li>
-        }
-
-        @if (tieneRol(ROLES_USUARIOS) || tieneModulo('ROLES')) {
-        <li class="nav-item">
-          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/roles"
-            routerLinkActive="active">ROLES</a>
-        </li>
-        }
-
-        @if (tieneRol(ROLES_USUARIOS) || tieneModulo('BITACORA')) {
-        <li class="nav-item">
-          <a class="nav-link px-2 py-1" style="font-size: 0.83rem;" routerLink="/bitacora"
-            routerLinkActive="active">BITÁCORA</a>
+        @if (veConfiguracion()) {
+        <li class="nav-item dropdown" (click)="$event.stopPropagation()">
+          <a class="nav-link dropdown-toggle px-2 py-1" style="font-size: 0.83rem;" href="#" role="button"
+            data-bs-toggle="dropdown" aria-expanded="false">CONFIGURACIÓN</a>
+          <ul class="dropdown-menu">
+            @if (tieneRol(ROLES_USUARIOS) || tieneModulo('USUARIOS')) {
+            <li><a class="dropdown-item" routerLink="/usuarios" routerLinkActive="active" (click)="closeMenu()">Usuarios</a></li>
+            }
+            @if (tieneRol(ROLES_USUARIOS) || tieneModulo('ROLES')) {
+            <li><a class="dropdown-item" routerLink="/roles" routerLinkActive="active" (click)="closeMenu()">Roles</a></li>
+            }
+            @if (tieneRol(ROLES_COBROS) || tieneModulo('COBROS')) {
+            <li><a class="dropdown-item" routerLink="/cobros" routerLinkActive="active" (click)="closeMenu()">Cobros</a></li>
+            }
+            @if (tieneRol(ROLES_USUARIOS) || tieneModulo('BITACORA')) {
+            <li><a class="dropdown-item" routerLink="/bitacora" routerLinkActive="active" (click)="closeMenu()">Bitácora</a></li>
+            }
+          </ul>
         </li>
         }
 

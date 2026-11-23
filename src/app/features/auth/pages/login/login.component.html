@@ -16,6 +16,9 @@
 
       @if (!mostrarRecuperar()) {
         <h2 class="text-center mb-4 fw-semibold text-secondary">Iniciar Sesión</h2>
+        @if (cuentaActivada) {
+        <div class="alert alert-success py-2 small">Tu cuenta ya está activa. Entra con tu usuario y la clave que acabas de crear.</div>
+        }
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="mb-3">

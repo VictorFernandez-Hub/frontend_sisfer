@@ -151,7 +151,7 @@
 <!-- Modal Unificado (Creación / Edición) -->
 <div class="modal fade" id="modalRegistroProv" tabindex="-1" aria-labelledby="modalRegistroProvLabel" aria-hidden="true"
   data-bs-backdrop="static">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
 
       <div class="modal-header bg-light border-bottom py-3">
@@ -174,16 +174,9 @@
         }
 
         <form [formGroup]="proveedorForm" (ngSubmit)="guardarProveedor()" autocomplete="off">
+          <h6 class="text-secondary mb-3">1. Datos de la empresa</h6>
           <div class="row g-3">
-
-            <!-- Columna Izquierda: identificación -->
-            <div class="col-md-6">
-              <div class="form-floating mb-3">
-                <input type="text" class="form-control bg-light" id="id_proveedor" formControlName="id_proveedor"
-                  placeholder="ID" readonly tabindex="-1" />
-                <label for="id_proveedor">ID Proveedor</label>
-              </div>
-
+            <div class="col-12">
               <div class="form-floating mb-3">
                 <select class="form-select" id="tipo_doc_prov" formControlName="tipo_doc">
                   @for (tipo of tiposDoc; track tipo) {
@@ -238,8 +231,8 @@
               </div>
             </div>
 
-            <!-- Columna Derecha: contacto -->
-            <div class="col-md-6">
+            <div class="col-12"><h6 class="text-secondary mb-0">2. Contacto y estado</h6></div>
+            <div class="col-12">
               <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="contacto" formControlName="contacto"
                   placeholder="Persona de contacto" [class.is-invalid]="esInvalido('contacto')" />
@@ -286,6 +279,11 @@
                 <div class="invalid-feedback">Máximo 200 caracteres.</div>
               </div>
 
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control bg-light" id="id_proveedor" formControlName="id_proveedor"
+                  placeholder="ID" readonly tabindex="-1" />
+                <label for="id_proveedor">Número interno</label>
+              </div>
               <div class="form-floating mb-3">
                 <select class="form-select" id="estado_prov" formControlName="estado">
                   <option value="ACTIVO">ACTIVO</option>

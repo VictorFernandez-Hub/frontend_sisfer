@@ -176,7 +176,7 @@ export class UsuarioListaComponent implements OnInit {
 
   prepararNuevoUsuario(): void {
     this.usuarioParaEditar.set(null);
-    this.mostrarClave.set(true);
+    this.mostrarClave.set(false);
     this.usuarioForm.reset({ estado: 'INACTIVO', codigoRol: 'VENDEDOR' });
   }
 

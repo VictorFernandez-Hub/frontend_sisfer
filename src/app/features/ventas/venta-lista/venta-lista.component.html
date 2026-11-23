@@ -216,7 +216,7 @@
 <!-- ===================== VENTANA: NUEVA VENTA / EDITAR BORRADOR / DETALLE ===================== -->
 <div #ventanaVenta class="modal fade" id="modalVenta" tabindex="-1" aria-labelledby="modalVentaTitulo"
   aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content border-0 shadow-lg">
       @if (vista() === 'form') {
       <app-venta-form [clientes]="clientes()" [productos]="productos()" [metodos]="metodos()" [tiposComp]="tiposComp()"

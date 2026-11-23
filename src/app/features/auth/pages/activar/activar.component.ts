@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { API_URL } from '../../../../core/constants/api.constants';
 
@@ -15,6 +15,9 @@ import { API_URL } from '../../../../core/constants/api.constants';
         <h5 class="text-center mb-3" style="color:#f97316;">Activar cuenta</h5>
         @if (mensaje()) {
           <div class="alert" [class.alert-success]="exito()" [class.alert-danger]="!exito()">{{ mensaje() }}</div>
+        }
+        @if (exito()) {
+          <button class="btn w-100 text-white" style="background:#f97316;" (click)="irAlLogin()">Ir a iniciar sesión</button>
         }
         @if (!exito()) {
           <div class="d-flex gap-3 mb-3">
@@ -52,6 +55,7 @@ import { API_URL } from '../../../../core/constants/api.constants';
 })
 export class ActivarComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private http = inject(HttpClient);
   token = '';
   clave = '';
@@ -72,6 +76,10 @@ export class ActivarComponent implements OnInit {
   tieneSimbolo(): boolean { return /[^A-Za-z0-9]/.test(this.clave); }
   claveValida(): boolean { return this.tieneMin() && this.tieneMayus() && this.tieneMinus() && this.tieneSimbolo(); }
 
+  irAlLogin(): void {
+    this.router.navigate(['/auth/login'], { queryParams: { activada: '1' } });
+  }
+
   activar(): void {
     if (!this.claveValida()) {
       this.mensaje.set('La clave no cumple lo requerido. Revísala.');
@@ -88,7 +96,8 @@ export class ActivarComponent implements OnInit {
       .subscribe({
         next: () => {
           this.exito.set(true);
-          this.mensaje.set('Cuenta activada. Ya puedes entrar. Cierra esta ventana.');
+          this.mensaje.set('Cuenta activada. Te llevamos a iniciar sesión.');
+          setTimeout(() => this.irAlLogin(), 1200);
         },
         error: () => {
           this.exito.set(false);

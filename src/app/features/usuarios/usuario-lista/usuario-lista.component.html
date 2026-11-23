@@ -9,7 +9,7 @@
 
 <div class="modal fade" id="modalRegistroUsuario" tabindex="-1" aria-labelledby="modalRegistroUsuarioLabel"
   aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg border-0">
 
       <div class="modal-header bg-light border-bottom-0 py-3">
@@ -34,58 +34,59 @@
     </div>
   }  
         <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" id="formUsuario">
+          <h6 class="text-secondary mb-3">1. Datos de la persona</h6>
           <div class="row g-3">
-
-            <div class="col-md-6 mt-2">
-              <div class="form-floating mb-3">
-                <input type="text" class="form-control bg-light" id="usuarioId" formControlName="idUsuario"
-                  placeholder="ID" readonly />
-                <label for="usuarioId">ID Usuario</label>
-              </div>
-
-              <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="cuentaInput" formControlName="cuenta"
-                  placeholder="Cuenta de Usuario" />
-                <label for="cuentaInput">Nombre de Usuario / Cuenta</label>
-              </div>
-
-              <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="nombresInput" formControlName="nombresCompleto"
-                  placeholder="Nombres Completos" />
-                <label for="nombresInput">Nombres y Apellidos Completos</label>
-                @if (avisoDocumento()) {
-                <div class="form-text">{{ avisoDocumento() }}</div>
-                }
-<app-ventana-error [mensaje]="errorDocumento()" (cerrar)="errorDocumento.set('')" />
-              </div>
-            </div>
-
-            <div class="col-md-6 mt-2">
-              <div class="form-floating mb-3">
-                <input type="email" class="form-control" id="emailInput" formControlName="email"
-                  placeholder="Correo Electrónico" />
-                <label for="emailInput">Correo Electrónico</label>
-              </div>
-
-              <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="telefonoInput" formControlName="telefono"
-                  placeholder="Teléfono" maxlength="9" inputmode="numeric"
-                  (input)="soloNumerosTelefono($event)" />
-                 <label for="telefonoInput">Número Telefónico</label>
-              </div>
-            
+            <div class="col-12">
               <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="dniInput" formControlName="dni"
                  placeholder="DNI" maxlength="8" inputmode="numeric"
                   (input)="soloNumerosDni($event)" />
                 <label for="dniInput">DNI (8 dígitos)</label>
-                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="nombresInput" formControlName="nombresCompleto"
+                  placeholder="Nombres Completos" />
+                <label for="nombresInput">Nombres y apellidos</label>
+                @if (avisoDocumento()) {
+                <div class="form-text">{{ avisoDocumento() }}</div>
+                }
+                <app-ventana-error [mensaje]="errorDocumento()" (cerrar)="errorDocumento.set('')" />
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="telefonoInput" formControlName="telefono"
+                  placeholder="Teléfono" maxlength="9" inputmode="numeric"
+                  (input)="soloNumerosTelefono($event)" />
+                <label for="telefonoInput">Celular</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="emailInput" formControlName="email"
+                  placeholder="Correo Electrónico" />
+                <label for="emailInput">Correo</label>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="text-secondary mb-3 mt-2">2. Datos de la cuenta</h6>
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="cuentaInput" formControlName="cuenta"
+                  placeholder="Cuenta de Usuario" />
+                <label for="cuentaInput">Usuario para entrar</label>
+              </div>
+            </div>
                 
                  <!-- CLAVE -->
               <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="cambiarClave"
                 [checked]="mostrarClave()" (change)="mostrarClave.set(!mostrarClave())" />
-                <label class="form-check-label" for="cambiarClave">Cambiar clave</label>
+                <label class="form-check-label" for="cambiarClave">Poner la clave aquí, si no puede usar el correo de activación</label>
               </div>
 
 @if (mostrarClave()) {
@@ -197,7 +198,6 @@
                 <label for="estadoInput">Estado de Cuenta</label>
               </div>
             </div>
-                </div>  <!-- cierra el estado -->
 
 @if (usuarioParaEditar()?.estado === 'INACTIVO') {
   <div class="mt-2">
@@ -206,7 +206,7 @@
     </button>
   </div>
 }
-            <div class="col-12 d-flex justify-content-end gap-2 mt-4 border-top pt-3">
+            <div class="d-flex justify-content-end gap-2 mt-4 border-top pt-3">
               <button type="button" (click)="resetearFormulario()"
                 class="btn btn-light px-4 text-secondary fw-semibold">Limpiar</button>
               <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">Guardar Usuario</button>

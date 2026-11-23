@@ -1,7 +1,7 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 
 @Component({
@@ -37,6 +37,8 @@ export class LoginComponent implements OnInit {
   confirmarClaveNueva = '';
 
   captchaA = 0;
+  private route = inject(ActivatedRoute);
+  cuentaActivada = false;
   captchaB = 0;
   respuestaCaptcha = '';
   captchaRecuperarA = 0;
@@ -58,6 +60,7 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.cuentaActivada = this.route.snapshot.queryParamMap.get('activada') === '1';
     const savedUser = localStorage.getItem('remembered_cuenta');
     if (savedUser) {
       this.loginForm.patchValue({ cuenta: savedUser, rememberMe: true });

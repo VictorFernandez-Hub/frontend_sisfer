@@ -201,7 +201,7 @@
 </div>
 
 <div class="modal fade" id="modalRegistroPro" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-light border-bottom py-3">
         <h5 class="modal-title fw-bold text-dark">
@@ -220,23 +220,9 @@
         }
 
         <form [formGroup]="productoForm" (ngSubmit)="guardarProducto()" autocomplete="off">
+          <h6 class="text-secondary mb-3">1. Qué producto es</h6>
           <div class="row g-3">
-            <div class="col-md-6">
-              <div class="row g-2">
-                <div class="col-4">
-                  <div class="form-floating mb-3">
-                    <input type="text" class="form-control bg-light" formControlName="id_producto" readonly />
-                    <label>ID</label>
-                  </div>
-                </div>
-                <div class="col-8">
-                  <div class="form-floating mb-3">
-                    <input type="text" class="form-control bg-light font-monospace" formControlName="codigo" readonly />
-                    <label>Código</label>
-                  </div>
-                </div>
-              </div>
-
+            <div class="col-12">
               <div class="form-floating mb-3">
                 <input type="text" class="form-control" formControlName="nombre" maxlength="150" />
                 <label>Nombre *</label>
@@ -270,7 +256,7 @@
               </div>
 
               <div class="row g-2">
-                <div class="col-7">
+                <div class="col-12">
                   <div class="form-floating mb-3">
                     <select class="form-select" formControlName="id_marca">
                       <option [ngValue]="null" disabled>Seleccione...</option>
@@ -281,7 +267,7 @@
                     <label>Marca *</label>
                   </div>
                 </div>
-                <div class="col-5">
+                <div class="col-12">
                   <div class="form-floating mb-3">
                     <select class="form-select" formControlName="id_unidad">
                       <option [ngValue]="null" disabled>Seleccione...</option>
@@ -301,16 +287,17 @@
               </div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-12"><h6 class="text-secondary mb-0">2. Precio y existencia</h6></div>
+            <div class="col-12">
               <div class="row g-2">
-                <div class="col-6">
+                <div class="col-12">
                   <div class="form-floating mb-1">
                     <input type="number" class="form-control text-end" formControlName="stock_inicial" min="0" step="any"
                       [class.is-invalid]="esInvalido('stock_inicial')" />
                     <label>{{ productoParaEditar() ? 'Stock actual *' : 'Stock inicial' }}</label>
                   </div>
                 </div>
-                <div class="col-6">
+                <div class="col-12">
                   <div class="form-floating mb-1">
                     <input type="number" class="form-control text-end" formControlName="stock_minimo" min="0" step="any"
                       [class.is-invalid]="esInvalido('stock_minimo')" />
@@ -367,6 +354,20 @@
                 }
               </div>
 
+              <div class="row g-2">
+                <div class="col-4">
+                  <div class="form-floating mb-3">
+                    <input type="text" class="form-control bg-light" formControlName="id_producto" readonly />
+                    <label>ID</label>
+                  </div>
+                </div>
+                <div class="col-8">
+                  <div class="form-floating mb-3">
+                    <input type="text" class="form-control bg-light font-monospace" formControlName="codigo" readonly />
+                    <label>Código</label>
+                  </div>
+                </div>
+              </div>
               <div class="form-floating mb-3">
                 <select class="form-select" formControlName="estado">
                   <option value="ACTIVO">ACTIVO</option>
@@ -391,7 +392,7 @@
 
 @if (puedeGestionar()) {
 <div class="modal fade" id="modalCatalogos" tabindex="-1" aria-labelledby="tituloCatalogos" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content catalogo-modal">
       <div class="modal-header border-0 pb-0">
         <div>

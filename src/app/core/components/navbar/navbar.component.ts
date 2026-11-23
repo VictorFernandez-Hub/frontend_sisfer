@@ -72,6 +72,12 @@ export class NavbarComponent implements OnInit {
     this.isMenuOpen.set(false);
   }
 
+  veConfiguracion(): boolean {
+    return this.tieneRol(this.ROLES_USUARIOS) || this.tieneRol(this.ROLES_COBROS)
+      || this.tieneModulo('USUARIOS') || this.tieneModulo('ROLES')
+      || this.tieneModulo('BITACORA') || this.tieneModulo('COBROS');
+  }
+
   tieneRol(rolesPermitidos: string[]): boolean {
     return this.authService.tieneRol(rolesPermitidos);
   }

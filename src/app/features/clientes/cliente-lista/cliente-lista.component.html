@@ -98,7 +98,7 @@
 
 <div class="modal fade" id="modalRegistroCli" tabindex="-1" aria-labelledby="modalRegistroCliLabel" aria-hidden="true"
   data-bs-backdrop="static">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
 
       <div class="modal-header bg-light border-bottom py-3">
@@ -114,15 +114,10 @@
 
       <div class="modal-body p-4">
         <form [formGroup]="clienteForm" (ngSubmit)="guardarCliente()" autocomplete="off">
+          <h6 class="text-secondary mb-3">1. Datos de la persona o empresa</h6>
           <div class="row g-3">
 
-            <div class="col-md-6">
-              <div class="form-floating mb-3">
-                <input type="text" class="form-control bg-light" id="id_cliente" formControlName="id_cliente"
-                  placeholder="ID" readonly tabindex="-1" />
-                <label for="id_cliente">ID Cliente</label>
-              </div>
-
+            <div class="col-12">
               <div class="form-floating mb-3">
                 <select class="form-select" id="tipo_doc" formControlName="tipo_doc">
                   <option value="DNI">DNI</option>
@@ -163,7 +158,8 @@
               </div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-12"><h6 class="text-secondary mb-0">2. Contacto y estado</h6></div>
+            <div class="col-12">
               <div class="form-floating mb-3">
                 <input type="tel" class="form-control" id="telefono" formControlName="telefono" placeholder="Teléfono"
                   maxlength="9"
@@ -190,6 +186,11 @@
                 <label for="direccion">Dirección Fiscal / Domicilio</label>
               </div>
 
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control bg-light" id="id_cliente" formControlName="id_cliente"
+                  placeholder="ID" readonly tabindex="-1" />
+                <label for="id_cliente">Número interno</label>
+              </div>
               <div class="form-floating mb-3">
                 <select class="form-select" id="estado" formControlName="estado">
                   <option value="ACTIVO">ACTIVO</option>
