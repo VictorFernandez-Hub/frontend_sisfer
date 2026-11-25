@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BuscadorComponent } from '../../../shared/components/buscador/buscador.component';
 import { extraerMensajeError } from '../../../shared/utils/http-error.util';
+import { descargarExcel, hoyIso, imprimirPdf, rangoMes, rangoSemana } from '../../../shared/utils/exportar.util';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProveedorService } from '../../proveedores/servicios/proveedor.service';
 import { ProductoService } from '../../productos/servicios/producto.service';
 import { Proveedor } from '../../proveedores/modelos/proveedor.model';
 import { Producto } from '../../productos/modelos/producto.model';
-import { CompraDetalle, CompraRequest, CompraResumen } from '../modelos/compra.model';
+import { CompraDetalle, CompraRequest, CompraResumen, EstadoCompra } from '../modelos/compra.model';
 import { CompraService } from '../servicios/compra.service';
 
 // Una línea del formulario: un producto, cuántas unidades y a qué costo
@@ -49,6 +50,12 @@ export class CompraListaComponent implements OnInit {
   errorMessage = signal<string>('');
   formError = signal<string>('');
   termino = signal<string>('');
+  filtroEstado = signal<'TODOS' | EstadoCompra>('TODOS');
+  filtroProveedor = signal<string>('');   // vacío = todos los proveedores
+  filtroTipoDoc = signal<string>('');     // vacío = todos los tipos de documento
+  filtroUsuario = signal<string>('');     // vacío = todos los usuarios
+  desde = signal<string>('');             // fecha en formato AAAA-MM-DD
+  hasta = signal<string>('');
 
   mostrandoForm = signal<boolean>(false);
   detalle = signal<CompraDetalle | null>(null);
@@ -61,15 +68,58 @@ export class CompraListaComponent implements OnInit {
   observacion = '';
   lineas: LineaForm[] = [];
 
+  // Proveedores que aparecen en las compras (para el filtro desplegable)
+  proveedoresEnLista = computed(() =>
+    [...new Set(this.compras().map(c => c.proveedor))].sort((a, b) => a.localeCompare(b))
+  );
+
+  // Usuarios que registraron compras (para el filtro desplegable)
+  usuariosEnLista = computed(() =>
+    [...new Set(this.compras().map(c => c.usuario ?? '').filter(u => u))].sort((a, b) => a.localeCompare(b))
+  );
+
+  hayFiltros = computed(() =>
+    this.filtroEstado() !== 'TODOS' || !!this.filtroProveedor() || !!this.filtroTipoDoc() ||
+    !!this.filtroUsuario() || !!this.desde() || !!this.hasta()
+  );
+
+  // Compras que se ven en la tabla (según buscador, estado, proveedor y fechas)
   comprasFiltradas = computed(() => {
     const t = this.termino().trim().toLowerCase();
-    return this.compras().filter(c =>
-      !t ||
-      c.numero.toLowerCase().includes(t) ||
-      c.proveedor.toLowerCase().includes(t) ||
-      (c.numDoc ?? '').toLowerCase().includes(t) ||
-      (c.usuario ?? '').toLowerCase().includes(t)
-    );
+    const estado = this.filtroEstado();
+    const prov = this.filtroProveedor();
+    const tipoDoc = this.filtroTipoDoc();
+    const usuario = this.filtroUsuario();
+    const d = this.desde();
+    const h = this.hasta();
+
+    return this.compras().filter(c => {
+      const coincideTexto = !t ||
+        c.numero.toLowerCase().includes(t) ||
+        c.proveedor.toLowerCase().includes(t) ||
+        (c.numDoc ?? '').toLowerCase().includes(t) ||
+        (c.usuario ?? '').toLowerCase().includes(t);
+      const coincideEstado = estado === 'TODOS' || c.estado === estado;
+      const coincideProveedor = !prov || c.proveedor === prov;
+      const coincideTipoDoc = !tipoDoc || c.tipoDoc === tipoDoc;
+      const coincideUsuario = !usuario || c.usuario === usuario;
+      const dia = (c.fecCompra ?? '').substring(0, 10);   // AAAA-MM-DD
+      const coincideDesde = !d || dia >= d;
+      const coincideHasta = !h || dia <= h;
+      return coincideTexto && coincideEstado && coincideProveedor && coincideTipoDoc &&
+        coincideUsuario && coincideDesde && coincideHasta;
+    });
+  });
+
+  // Resumen de lo que se ve: cuántas compras y cuánto suman las confirmadas
+  resumenFiltrado = computed(() => {
+    const lista = this.comprasFiltradas();
+    const confirmadas = lista.filter(c => c.estado === 'CONFIRMADA');
+    return {
+      cantidad: lista.length,
+      confirmadas: confirmadas.length,
+      totalConfirmado: confirmadas.reduce((suma, c) => suma + Number(c.totTotal ?? 0), 0)
+    };
   });
 
   ngOnInit(): void {
@@ -101,6 +151,93 @@ export class CompraListaComponent implements OnInit {
 
   filtrarCompras(termino: string): void {
     this.termino.set(termino);
+  }
+
+  cambiarEstado(event: Event): void {
+    this.filtroEstado.set((event.target as HTMLSelectElement).value as 'TODOS' | EstadoCompra);
+  }
+
+  cambiarProveedor(event: Event): void {
+    this.filtroProveedor.set((event.target as HTMLSelectElement).value);
+  }
+
+  cambiarDesde(event: Event): void {
+    this.desde.set((event.target as HTMLInputElement).value);
+  }
+
+  cambiarHasta(event: Event): void {
+    this.hasta.set((event.target as HTMLInputElement).value);
+  }
+
+  cambiarTipoDoc(event: Event): void {
+    this.filtroTipoDoc.set((event.target as HTMLSelectElement).value);
+  }
+
+  cambiarUsuario(event: Event): void {
+    this.filtroUsuario.set((event.target as HTMLSelectElement).value);
+  }
+
+  rangoHoy(): void {
+    this.desde.set(hoyIso());
+    this.hasta.set(hoyIso());
+  }
+
+  rangoEstaSemana(): void {
+    const r = rangoSemana();
+    this.desde.set(r.desde);
+    this.hasta.set(r.hasta);
+  }
+
+  rangoEsteMes(): void {
+    const r = rangoMes();
+    this.desde.set(r.desde);
+    this.hasta.set(r.hasta);
+  }
+
+  limpiarFiltros(): void {
+    this.filtroEstado.set('TODOS');
+    this.filtroProveedor.set('');
+    this.filtroTipoDoc.set('');
+    this.filtroUsuario.set('');
+    this.desde.set('');
+    this.hasta.set('');
+  }
+
+  // ---------------------------------------------------------- exportar
+
+  private encabezadosExport(): string[] {
+    return ['N° compra', 'Fecha', 'Proveedor', 'Tipo de documento', 'N° de documento', 'Total (S/)', 'Estado', 'Registró'];
+  }
+
+  private filasExport(): (string | number)[][] {
+    return this.comprasFiltradas().map(c => [
+      c.numero, (c.fecCompra ?? '').substring(0, 10), c.proveedor, c.tipoDoc, c.numDoc ?? '',
+      Number(c.totTotal ?? 0).toFixed(2), c.estado, c.usuario ?? ''
+    ]);
+  }
+
+  private textoFiltros(): string {
+    const partes: string[] = [];
+    if (this.filtroEstado() !== 'TODOS') partes.push(`Estado: ${this.filtroEstado()}`);
+    if (this.filtroProveedor()) partes.push(`Proveedor: ${this.filtroProveedor()}`);
+    if (this.filtroTipoDoc()) partes.push(`Documento: ${this.filtroTipoDoc()}`);
+    if (this.filtroUsuario()) partes.push(`Registró: ${this.filtroUsuario()}`);
+    if (this.desde()) partes.push(`Desde: ${this.desde()}`);
+    if (this.hasta()) partes.push(`Hasta: ${this.hasta()}`);
+    if (this.termino().trim()) partes.push(`Búsqueda: ${this.termino().trim()}`);
+    return partes.length ? partes.join(' · ') : 'Sin filtros';
+  }
+
+  exportarExcel(): void {
+    descargarExcel('compras', this.encabezadosExport(), this.filasExport());
+  }
+
+  exportarPdf(): void {
+    const r = this.resumenFiltrado();
+    const sub = `${this.textoFiltros()} — ${r.cantidad} compras; confirmadas: ${r.confirmadas}, total S/ ${r.totalConfirmado.toFixed(2)}`;
+    if (!imprimirPdf('Compras', sub, this.encabezadosExport(), this.filasExport())) {
+      this.notificacion.mostrar('El navegador bloqueó la ventana. Permita las ventanas emergentes e intente de nuevo.', 'error');
+    }
   }
 
   // ---------------------------------------------------------- nueva compra

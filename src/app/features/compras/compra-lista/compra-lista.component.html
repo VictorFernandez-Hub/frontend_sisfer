@@ -4,6 +4,16 @@
     <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
     <span>Actualizar</span>
   </button>
+  <button type="button" class="btn btn-light d-flex align-items-center gap-2 shadow-sm"
+    (click)="exportarExcel()" [disabled]="cargando()" title="Descarga lo que se ve en la tabla (con los filtros)">
+    <i class="bi bi-file-earmark-excel" aria-hidden="true"></i>
+    <span>Excel</span>
+  </button>
+  <button type="button" class="btn btn-light d-flex align-items-center gap-2 shadow-sm"
+    (click)="exportarPdf()" [disabled]="cargando()" title="Abre la tabla filtrada lista para guardar como PDF">
+    <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+    <span>PDF</span>
+  </button>
   @if (puedeGestionar) {
   <button type="button" class="btn btn-naranja text-white d-flex align-items-center gap-2 shadow-sm" (click)="nuevaCompra()">
     <i class="bi bi-plus-lg" aria-hidden="true"></i>
@@ -210,6 +220,78 @@
     (alBuscar)="filtrarCompras($event)">
   </app-buscador>
 
+  <!-- Filtros: estado, proveedor y rango de fechas de la factura -->
+  <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+    <div>
+      <label for="filtroEstadoCompra" class="form-label text-white small mb-1">Estado</label>
+      <select id="filtroEstadoCompra" class="form-select form-select-sm"
+        [value]="filtroEstado()" (change)="cambiarEstado($event)">
+        <option value="TODOS">Todos</option>
+        <option value="BORRADOR">Borrador</option>
+        <option value="CONFIRMADA">Confirmada</option>
+        <option value="ANULADA">Anulada</option>
+      </select>
+    </div>
+    <div>
+      <label for="filtroProveedorCompra" class="form-label text-white small mb-1">Proveedor</label>
+      <select id="filtroProveedorCompra" class="form-select form-select-sm"
+        [value]="filtroProveedor()" (change)="cambiarProveedor($event)">
+        <option value="">Todos</option>
+        @for (nombre of proveedoresEnLista(); track nombre) {
+        <option [value]="nombre">{{ nombre }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label for="filtroTipoDocCompra" class="form-label text-white small mb-1">Documento</label>
+      <select id="filtroTipoDocCompra" class="form-select form-select-sm"
+        [value]="filtroTipoDoc()" (change)="cambiarTipoDoc($event)">
+        <option value="">Todos</option>
+        <option value="FACTURA">Factura</option>
+        <option value="BOLETA">Boleta</option>
+        <option value="GUIA">Guía de remisión</option>
+      </select>
+    </div>
+    <div>
+      <label for="filtroUsuarioCompra" class="form-label text-white small mb-1">Registró</label>
+      <select id="filtroUsuarioCompra" class="form-select form-select-sm"
+        [value]="filtroUsuario()" (change)="cambiarUsuario($event)">
+        <option value="">Todos</option>
+        @for (u of usuariosEnLista(); track u) {
+        <option [value]="u">{{ u }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="form-label text-white small mb-1 d-block">Período</label>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Períodos rápidos">
+        <button type="button" class="btn btn-light" (click)="rangoHoy()">Hoy</button>
+        <button type="button" class="btn btn-light" (click)="rangoEstaSemana()">Esta semana</button>
+        <button type="button" class="btn btn-light" (click)="rangoEsteMes()">Este mes</button>
+      </div>
+    </div>
+    <div>
+      <label for="filtroDesdeCompra" class="form-label text-white small mb-1">Desde</label>
+      <input id="filtroDesdeCompra" type="date" class="form-control form-control-sm"
+        [value]="desde()" (change)="cambiarDesde($event)">
+    </div>
+    <div>
+      <label for="filtroHastaCompra" class="form-label text-white small mb-1">Hasta</label>
+      <input id="filtroHastaCompra" type="date" class="form-control form-control-sm"
+        [value]="hasta()" (change)="cambiarHasta($event)">
+    </div>
+    @if (hayFiltros()) {
+    <button type="button" class="btn btn-sm btn-light" (click)="limpiarFiltros()">Quitar filtros</button>
+    }
+  </div>
+
+  <!-- Resumen de lo que se ve con los filtros -->
+  <p class="text-white small mb-2">
+    Mostrando <strong>{{ resumenFiltrado().cantidad }}</strong> compras ·
+    confirmadas: <strong>{{ resumenFiltrado().confirmadas }}</strong> ·
+    total confirmado: <strong>S/ {{ resumenFiltrado().totalConfirmado | number:'1.2-2' }}</strong>
+  </p>
+
   @if (errorMessage()) {
   <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
     <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
@@ -263,7 +345,7 @@
               @if (compras().length === 0) {
               <span>Aún no hay compras. Use «Nueva compra» para registrar la primera.</span>
               } @else {
-              <span>Ninguna compra coincide con la búsqueda</span>
+              <span>Ninguna compra coincide con la búsqueda o los filtros</span>
               }
             </td>
           </tr>

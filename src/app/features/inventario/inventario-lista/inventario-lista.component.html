@@ -4,6 +4,16 @@
     <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
     <span>Actualizar</span>
   </button>
+  <button type="button" class="btn btn-light d-flex align-items-center gap-2 shadow-sm"
+    (click)="exportarExcel()" [disabled]="cargando()" title="Descarga lo que se ve en la tabla (con los filtros)">
+    <i class="bi bi-file-earmark-excel" aria-hidden="true"></i>
+    <span>Excel</span>
+  </button>
+  <button type="button" class="btn btn-light d-flex align-items-center gap-2 shadow-sm"
+    (click)="exportarPdf()" [disabled]="cargando()" title="Abre la tabla filtrada lista para guardar como PDF">
+    <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+    <span>PDF</span>
+  </button>
 </div>
 
 <div class="container-fluid mt-4">
@@ -53,6 +63,58 @@
     (alBuscar)="filtrarProductos($event)">
   </app-buscador>
 
+  <!-- Filtros: nivel de stock, categoría y marca -->
+  <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+    <div>
+      <label for="filtroNivelInv" class="form-label text-white small mb-1">Nivel de stock</label>
+      <select id="filtroNivelInv" class="form-select form-select-sm"
+        [value]="filtroNivel()" (change)="cambiarNivel($event)">
+        <option value="TODOS">Todos</option>
+        <option value="OK">Disponible</option>
+        <option value="STOCK_MINIMO">Stock mínimo</option>
+        <option value="AGOTADO">Agotado</option>
+      </select>
+    </div>
+    <div>
+      <label for="filtroCategoriaInv" class="form-label text-white small mb-1">Categoría</label>
+      <select id="filtroCategoriaInv" class="form-select form-select-sm"
+        [value]="filtroCategoria()" (change)="cambiarCategoria($event)">
+        <option value="">Todas</option>
+        @for (c of categorias(); track c) {
+        <option [value]="c">{{ c }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label for="filtroMarcaInv" class="form-label text-white small mb-1">Marca</label>
+      <select id="filtroMarcaInv" class="form-select form-select-sm"
+        [value]="filtroMarca()" (change)="cambiarMarca($event)">
+        <option value="">Todas</option>
+        @for (m of marcas(); track m) {
+        <option [value]="m">{{ m }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label for="filtroProveedorInv" class="form-label text-white small mb-1">Proveedor</label>
+      <select id="filtroProveedorInv" class="form-select form-select-sm"
+        [value]="filtroProveedor()" (change)="cambiarProveedor($event)">
+        <option value="">Todos</option>
+        @for (v of proveedores(); track v) {
+        <option [value]="v">{{ v }}</option>
+        }
+      </select>
+    </div>
+    <div class="form-check text-white mb-1">
+      <input id="soloReponerInv" type="checkbox" class="form-check-input"
+        [checked]="soloReponer()" (change)="cambiarReponer($event)">
+      <label for="soloReponerInv" class="form-check-label small">Solo los que hay que reponer</label>
+    </div>
+    @if (hayFiltros()) {
+    <button type="button" class="btn btn-sm btn-light" (click)="limpiarFiltros()">Quitar filtros</button>
+    }
+  </div>
+
   @if (errorMessage()) {
   <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
     <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
@@ -69,6 +131,7 @@
             <th scope="col" class="py-2">Producto</th>
             <th scope="col" class="py-2">Categoría</th>
             <th scope="col" class="py-2">Marca</th>
+            <th scope="col" class="py-2">Proveedor</th>
             <th scope="col" class="text-end py-2">Stock actual</th>
             <th scope="col" class="text-end py-2">Mínimo</th>
             <th scope="col" class="text-end py-2">Falta</th>
@@ -82,7 +145,7 @@
         <tbody>
           @if (cargando()) {
           <tr>
-            <td [attr.colspan]="puedeAjustar ? 10 : 9" class="text-center py-4 text-secondary">
+            <td [attr.colspan]="puedeAjustar ? 11 : 10" class="text-center py-4 text-secondary">
               <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
               Cargando inventario...
             </td>
@@ -96,6 +159,9 @@
             </td>
             <td class="text-dark">{{ p.categoria }}</td>
             <td class="text-secondary">{{ p.marca }}</td>
+            <td class="text-dark">
+              @if (p.proveedor) { {{ p.proveedor }} } @else { <span class="text-muted fst-italic">Sin proveedor</span> }
+            </td>
             <td class="text-end fw-semibold text-dark">
               {{ p.stock_actual | number:'1.0-3' }} <span class="text-secondary small">{{ p.unidad_codigo }}</span>
             </td>
@@ -121,12 +187,12 @@
           </tr>
           } @empty {
           <tr>
-            <td [attr.colspan]="puedeAjustar ? 10 : 9" class="text-center py-5 text-secondary">
+            <td [attr.colspan]="puedeAjustar ? 11 : 10" class="text-center py-5 text-secondary">
               <i class="bi bi-box-seam fs-1 d-block mb-2" aria-hidden="true"></i>
               @if (productos().length === 0) {
               <span>Aún no hay productos en el inventario</span>
               } @else {
-              <span>Ningún producto coincide con la búsqueda o el filtro</span>
+              <span>Ningún producto coincide con la búsqueda o los filtros</span>
               }
             </td>
           </tr>
@@ -136,7 +202,7 @@
         @if (!cargando() && productos().length > 0) {
         <tfoot class="table-light">
           <tr>
-            <td colspan="7" class="text-end fw-semibold py-2">Valor total del inventario (al costo promedio):</td>
+            <td colspan="8" class="text-end fw-semibold py-2">Valor total del inventario (al costo promedio):</td>
             <td class="text-end fw-bold py-2">S/ {{ resumen().valorTotal | number:'1.2-2' }}</td>
             <td></td>
             @if (puedeAjustar) { <td></td> }
