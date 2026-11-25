@@ -52,3 +52,12 @@ footer {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
+/* Al imprimir (por ejemplo, el arqueo de caja) solo sale el contenido de la pantalla */
+@media print {
+  app-header,
+  app-navbar,
+  app-footer,
+  .no-print {
+    display: none !important;
+  }
+}

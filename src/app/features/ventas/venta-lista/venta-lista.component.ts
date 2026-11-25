@@ -6,6 +6,8 @@ import { BuscadorComponent } from '../../../shared/components/buscador/buscador.
 import { extraerMensajeError } from '../../../shared/utils/http-error.util';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { CajaService } from '../../caja/caja.service';
+import { CajaComponent } from '../../caja/caja.component';
 import { ClienteService } from '../../clientes/servicios/cliente.service';
 import { ProductoService } from '../../productos/servicios/producto.service';
 import { Cliente } from '../../clientes/modelos/cliente.model';
@@ -22,7 +24,7 @@ type VistaVentana = 'form' | 'detalle' | null;
 @Component({
   selector: 'app-venta-lista',
   standalone: true,
-  imports: [CommonModule, FormsModule, BuscadorComponent, VentaFormComponent, VentaDetalleComponent],
+  imports: [CommonModule, FormsModule, CajaComponent, BuscadorComponent, VentaFormComponent, VentaDetalleComponent],
   templateUrl: './venta-lista.component.html',
   styleUrls: ['./venta-lista.component.css']
 })
@@ -32,6 +34,7 @@ export class VentaListaComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly productoService = inject(ProductoService);
   private readonly authService = inject(AuthService);
   private readonly notificacion = inject(NotificationService);
+  private readonly cajaService = inject(CajaService);
 
   // Mismos roles que SecurityConfig: el gerente solo consulta y el precio lo cambia el administrador del negocio
   readonly puedeConsultar = this.authService.tieneRol(ROLES_CONSULTAR);
@@ -39,6 +42,16 @@ export class VentaListaComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly esAdminNegocio = this.authService.tieneRol(ROLES_ADMIN_NEGOCIO);
 
   readonly claseEstado = claseEstado;
+
+  // Para cobrar hay que tener la caja del turno abierta (las proformas no la necesitan)
+  readonly caja = this.cajaService.cajaAbierta;
+  cajaConsultada = signal<boolean>(false);
+
+  // Pestañas de la pantalla: las ventas, la caja del turno y el historial de cajas.
+  // El vendedor empieza en "Mi caja" y solo pasa a vender cuando la abrió.
+  pestana = signal<'ventas' | 'caja' | 'cajas'>(
+    this.puedeRegistrar && !this.esAdminNegocio && !this.caja() ? 'caja' : 'ventas');
+  ventasBloqueadas = computed(() => this.puedeRegistrar && !this.esAdminNegocio && !this.caja());
 
   ventas = signal<VentaResumen[]>([]);
   clientes = signal<Cliente[]>([]);
@@ -123,6 +136,7 @@ export class VentaListaComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     if (!this.puedeRegistrar) return;
 
+    this.revisarCaja();
     this.ventaService.metodos().subscribe({
       next: (lista) => this.metodos.set(lista),
       error: () => this.metodos.set([])
@@ -202,6 +216,32 @@ export class VentaListaComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (lista) => this.productos.set(lista),
       error: () => this.productos.set([])
     });
+  }
+
+  // El vendedor no trabaja sin caja: si no la abrió, se queda en "Mi caja" con la apertura.
+  // El administrador puede revisar ventas sin abrir caja; solo se le avisa que no podrá cobrar.
+  private revisarCaja(): void {
+    this.cajaService.actual().subscribe({
+      next: (r) => {
+        this.cajaConsultada.set(true);
+        if (r.abierta && this.pestana() === 'caja') this.pestana.set('ventas');
+        if (!r.abierta && this.ventasBloqueadas()) this.pestana.set('caja');
+      },
+      error: () => this.cajaConsultada.set(true)
+    });
+  }
+
+  elegirPestana(p: 'ventas' | 'caja' | 'cajas'): void {
+    if (p === 'ventas' && this.ventasBloqueadas()) return;
+    this.pestana.set(p);
+    if (p === 'ventas') this.cargarVentas();
+  }
+
+  // Recién abierta la caja, el vendedor pasa directo a vender
+  alAbrirCaja(): void {
+    this.pestana.set('ventas');
+    this.cargarVentas();
+    this.cargarProductos();
   }
 
   filtrarVentas(termino: string): void {

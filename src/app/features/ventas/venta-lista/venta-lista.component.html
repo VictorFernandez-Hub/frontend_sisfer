@@ -11,8 +11,26 @@
 } @else {
 
 <div class="container-fluid px-4 mt-4">
-  <header class="ventas-barra">
+  <header class="ventas-barra no-print">
     <h2>Ventas</h2>
+    <nav class="ventas-pestanas" role="tablist" aria-label="Secciones de ventas">
+      <button type="button" role="tab" [class.activa]="pestana() === 'ventas'" [attr.aria-selected]="pestana() === 'ventas'"
+        [disabled]="ventasBloqueadas()" [title]="ventasBloqueadas() ? 'Abra su caja para empezar a vender' : ''"
+        (click)="elegirPestana('ventas')">
+        @if (ventasBloqueadas()) { <i class="bi bi-lock-fill me-1" aria-hidden="true"></i> }
+        Ventas
+      </button>
+      @if (puedeRegistrar) {
+      <button type="button" role="tab" [class.activa]="pestana() === 'caja'" [attr.aria-selected]="pestana() === 'caja'"
+        (click)="elegirPestana('caja')">
+        Mi caja
+        @if (caja()) { <span class="punto-abierta" title="Caja abierta"></span> }
+      </button>
+      }
+      <button type="button" role="tab" [class.activa]="pestana() === 'cajas'" [attr.aria-selected]="pestana() === 'cajas'"
+        (click)="elegirPestana('cajas')">Historial de cajas</button>
+    </nav>
+    @if (pestana() === 'ventas') {
     <div class="d-flex gap-2">
       <button type="button" class="btn btn-light border d-flex align-items-center gap-2"
         [disabled]="cargando()" (click)="cargarVentas()">
@@ -27,7 +45,39 @@
       </button>
       }
     </div>
+    }
   </header>
+
+  @if (pestana() === 'caja') {
+  <app-caja vistaInicial="turno" (abrio)="alAbrirCaja()" (irAVentas)="elegirPestana('ventas')"></app-caja>
+  } @else if (pestana() === 'cajas') {
+  <app-caja vistaInicial="historial"></app-caja>
+  } @else {
+
+  <!-- ===================== CAJA DEL TURNO ===================== -->
+  @if (puedeRegistrar && cajaConsultada()) {
+  @if (caja(); as c) {
+  <div class="alert py-2 d-flex flex-wrap align-items-center gap-2 mb-3"
+    [ngClass]="c.deOtroDia ? 'alert-warning' : 'alert-success'">
+    <i class="bi" [ngClass]="c.deOtroDia ? 'bi-exclamation-triangle-fill' : 'bi-cash-coin'" aria-hidden="true"></i>
+    <span class="me-auto">
+      @if (c.deOtroDia) {
+      Su caja {{ c.numero }} está abierta desde el {{ c.fecApertura | date:'dd/MM/yyyy' }}. Ciérrela y abra una nueva para cobrar hoy.
+      } @else {
+      Caja <strong>{{ c.numero }}</strong> abierta desde las {{ c.fecApertura | date:'HH:mm' }}.
+      Efectivo esperado: <strong>S/ {{ c.efectivoEsperado | number:'1.2-2' }}</strong>
+      }
+    </span>
+    <button type="button" class="btn btn-sm btn-light border" (click)="elegirPestana('caja')">Ver mi caja</button>
+  </div>
+  } @else {
+  <div class="alert alert-warning py-2 d-flex flex-wrap align-items-center gap-2 mb-3">
+    <i class="bi bi-lock-fill" aria-hidden="true"></i>
+    <span class="me-auto">No tiene una caja abierta. Puede preparar proformas, pero para cobrar debe abrir su caja.</span>
+    <button type="button" class="btn btn-sm btn-warning fw-semibold" (click)="elegirPestana('caja')">Abrir caja</button>
+  </div>
+  }
+  }
 
   <!-- ===================== RESUMEN: Confirmadas, En borrador y Anuladas filtran la tabla ===================== -->
   <div class="row g-3 mb-3">
@@ -211,6 +261,7 @@
       </table>
     </div>
   </div>
+}
 </div>
 
 <!-- ===================== VENTANA: NUEVA VENTA / EDITAR BORRADOR / DETALLE ===================== -->

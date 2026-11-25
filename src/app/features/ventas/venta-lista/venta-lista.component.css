@@ -4,6 +4,7 @@
 
 .ventas-barra {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -139,4 +140,45 @@
 .btn-naranja {
   background-color: #f97316;
   border-color: #f97316;
+}
+/* Pestañas: Ventas, Mi caja e Historial de cajas */
+.ventas-pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin-right: auto;
+  margin-left: 1rem;
+  border-radius: 10px;
+  background: #f1f1f1;
+}
+
+.ventas-pestanas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  background: transparent;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #555;
+}
+
+.ventas-pestanas button.activa {
+  background: #fff;
+  color: #1f1f1f;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.ventas-pestanas button:disabled {
+  color: #9a9a9a;
+  cursor: not-allowed;
+}
+
+.punto-abierta {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #198754;
 }

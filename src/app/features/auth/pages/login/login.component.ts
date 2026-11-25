@@ -114,7 +114,7 @@ export class LoginComponent implements OnInit {
       next: (res) => {
         this.isLoading.set(false);
         const roles: string[] = res?.roles ?? [];
-        this.router.navigate([this.rutaSegunRol(roles)]);
+        this.router.navigateByUrl(this.rutaSegunRol(roles));
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -135,6 +135,8 @@ export class LoginComponent implements OnInit {
     const tiene = (rol: string) => roles.some(r => r.toUpperCase().includes(rol));
     if (tiene('ADMIN_SISTEMA')) return '/usuarios';
     if (tiene('ALMACENERO')) return '/productos';
+    // El vendedor empieza su turno en Ventas: si no abrió su caja, ahí se le pide la apertura
+    if (tiene('VENDEDOR')) return '/ventas';
     return '/clientes';
   }
 
