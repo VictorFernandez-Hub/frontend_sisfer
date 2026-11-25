@@ -1,0 +1,314 @@
+/* Mismo estilo que Datos para cobrar: tarjetas blancas y el naranja de la ferretería */
+
+.caja-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 14px;
+  border-left: 6px solid #ffa500;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.caja-titulo h2 {
+  margin: 0;
+  color: #1f1f1f;
+  font-weight: 800;
+}
+
+.caja-pestanas {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 10px;
+  background: #f1f1f1;
+}
+
+.caja-pestanas button {
+  border: 0;
+  background: transparent;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #555;
+}
+
+.caja-pestanas button.activa {
+  background: #fff;
+  color: #1f1f1f;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.caja-bloque {
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.sin-acceso {
+  max-width: 34rem;
+}
+
+.caja-btn {
+  background: #ffa500;
+  border: 0;
+  color: #1f1f1f;
+  font-weight: 700;
+}
+
+.caja-btn:hover:not(:disabled) {
+  background: #ffb11a;
+  color: #1f1f1f;
+}
+
+.caja-btn-oscuro {
+  background: #1f1f1f;
+  border: 0;
+  color: #fff;
+  font-weight: 700;
+}
+
+.caja-btn-oscuro:hover:not(:disabled) {
+  background: #000;
+  color: #ffa500;
+}
+
+/* ---------------------------------------------------------------- apertura */
+
+.apertura {
+  max-width: 40rem;
+}
+
+.apertura-icono {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 12px;
+  background: #fff3dc;
+  color: #c27c00;
+  font-size: 1.5rem;
+}
+
+.apertura-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  background: #f8f8f8;
+}
+
+.apertura-datos dt {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.apertura-datos dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.denominaciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.denominacion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  background: #eef7ee;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2d6a2d;
+}
+
+.denominacion.moneda {
+  background: #f6f1e4;
+  color: #8a6a12;
+}
+
+/* ---------------------------------------------------------------- caja abierta */
+
+.caja-estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.arqueo-tarjeta {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.arqueo-tarjeta span {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.arqueo-tarjeta strong {
+  font-size: 1.4rem;
+}
+
+.arqueo-tarjeta.destacada {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+.arqueo-tarjeta.destacada span {
+  color: #ffa500;
+}
+
+.arqueo-cierre {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.arqueo-cierre > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.arqueo-cierre span {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.arqueo-cierre strong {
+  font-size: 1.25rem;
+}
+
+.arqueo-ventas {
+  max-height: 22rem;
+}
+
+tr.anulada td {
+  color: #adb5bd;
+  text-decoration: line-through;
+}
+
+tr.anulada td .badge {
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------- ventanas */
+
+.caja-velo {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  overflow-y: auto;
+}
+
+.caja-ventana {
+  width: 100%;
+  max-width: 34rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: 1.25rem;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+.caja-ventana-ancha {
+  max-width: 72rem;
+  background: #f4f4f4;
+}
+
+.cierre-cuadre {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: #f8f8f8;
+}
+
+.cierre-cuadre > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.cierre-cuadre span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #6c757d;
+}
+
+.cierre-cuadre > div[class*='text-'] span {
+  color: inherit;
+}
+
+.cierre-cuadre strong {
+  font-size: 1.15rem;
+}
+
+.solo-impresion {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- impresión del arqueo */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .solo-impresion {
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .caja-velo {
+    position: static;
+    background: none;
+    padding: 0;
+  }
+
+  .caja-ventana {
+    max-height: none;
+    box-shadow: none;
+    background: #fff;
+  }
+
+  .caja-bloque,
+  .arqueo-tarjeta {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  .arqueo-ventas {
+    max-height: none;
+  }
+}

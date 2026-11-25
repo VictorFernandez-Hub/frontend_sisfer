@@ -38,6 +38,8 @@ export const routes: Routes = [
         loadComponent: () => import('./features/ventas')
           .then(m => m.VentaListaComponent)
       },
+      // La caja está dentro de Ventas (pestaña "Mi caja")
+      { path: 'caja', redirectTo: 'ventas', pathMatch: 'full' },
       {
         path: 'cobros',
         loadComponent: () => import('./features/ventas/cobros/cobros.component')

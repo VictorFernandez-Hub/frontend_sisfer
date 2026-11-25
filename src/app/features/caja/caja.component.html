@@ -1,0 +1,478 @@
+@if (!puedeEntrar) {
+<div class="container mt-5">
+  <div class="caja-bloque text-center py-5 mx-auto sin-acceso">
+    <i class="bi bi-shield-lock fs-1 d-block mb-2 text-secondary" aria-hidden="true"></i>
+    <h5 class="fw-bold">Su rol no trabaja con caja</h5>
+    <p class="text-secondary mb-0">La caja es para quienes cobran ventas, el administrador del negocio y el gerente.</p>
+  </div>
+</div>
+} @else {
+
+<div class="caja" [class.no-print]="!!detalleHistorial()">
+
+  @if (error() && !cierreDe() && !mostrarMovimiento()) {
+  <div class="alert alert-danger py-2 no-print" role="alert">{{ error() }}</div>
+  }
+
+  <!-- =============================================== MI TURNO =============================================== -->
+  @if (pestana() === 'turno') {
+  @if (cargando()) {
+  <div class="caja-bloque text-center py-5 text-secondary">
+    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> Consultando su caja...
+  </div>
+  } @else if (arqueo(); as a) {
+  <!-- Recién cerrada: se muestra el arqueo para imprimir o entregar -->
+  <div class="alert alert-success d-flex flex-wrap align-items-center gap-2 no-print">
+    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+    <span class="me-auto">La caja {{ a.numero }} quedó cerrada. Entregue el efectivo y este arqueo al administrador.</span>
+    <button type="button" class="btn btn-sm btn-light border" (click)="imprimir()">
+      <i class="bi bi-printer me-1" aria-hidden="true"></i>Imprimir arqueo
+    </button>
+    <button type="button" class="btn btn-sm caja-btn" (click)="arqueo.set(null)">Abrir una nueva caja</button>
+  </div>
+  <ng-container *ngTemplateOutlet="vistaArqueo; context: { $implicit: a }"></ng-container>
+  } @else if (!caja()) {
+  <!-- ---------------------------------- APERTURA ---------------------------------- -->
+  <section class="caja-bloque apertura mx-auto">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <div class="apertura-icono"><i class="bi bi-unlock" aria-hidden="true"></i></div>
+      <div>
+        <h4 class="fw-bold mb-1">Apertura de caja</h4>
+        <p class="text-secondary mb-0">
+          Para empezar su turno de ventas, registre el fondo inicial que recibió y quién se lo entregó.
+          Sin caja abierta no se pueden cobrar ventas.
+        </p>
+      </div>
+    </div>
+
+    <dl class="apertura-datos">
+      <div><dt>Responsable</dt><dd>{{ cuenta() }}</dd></div>
+      <div><dt>Fecha</dt><dd>{{ ahora | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+    </dl>
+
+    <label for="apMonto" class="form-label small mb-1">Fondo inicial (S/)</label>
+    <input id="apMonto" type="number" min="0" step="0.10" class="form-control form-control-lg" placeholder="0.00"
+      [(ngModel)]="montoApertura" [class.is-invalid]="!!errorApertura()">
+    @if (errorApertura()) {
+    <div class="text-danger small mt-1">{{ errorApertura() }}</div>
+    }
+
+    @if (pideEntregador()) {
+    <label for="apEntrega" class="form-label small mt-3 mb-1">¿Quién le entregó el fondo?</label>
+    <select id="apEntrega" class="form-select" [(ngModel)]="idEntregadoPor"
+      [class.is-invalid]="idEntregadoPor === null && !!error()">
+      <option [ngValue]="null" disabled>Seleccione a la persona</option>
+      @for (e of entregadores(); track e.idUsuario) {
+      <option [ngValue]="e.idUsuario">{{ e.nombre }} ({{ e.cuenta }}) · {{ e.rol }}</option>
+      }
+    </select>
+    }
+
+    <label for="obsApertura" class="form-label small mt-3 mb-1">Nota (opcional)</label>
+    <input id="obsApertura" class="form-control" maxlength="120" placeholder="Ejemplo: 20 soles en monedas de 1"
+      [(ngModel)]="obsApertura">
+
+    <div class="d-flex justify-content-between align-items-center mt-4">
+      <div>
+        <div class="small text-secondary">Fondo inicial</div>
+        <div class="fs-3 fw-bold">S/ {{ totalApertura() | number:'1.2-2' }}</div>
+      </div>
+      <button type="button" class="btn btn-lg caja-btn px-4"
+        [disabled]="enviando() || !!errorApertura() || (pideEntregador() && idEntregadoPor === null)"
+        (click)="abrirCaja()">
+        @if (enviando()) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+        Abrir caja
+      </button>
+    </div>
+  </section>
+  } @else if (caja(); as c) {
+  <!-- ---------------------------------- CAJA ABIERTA ---------------------------------- -->
+  @if (c.deOtroDia) {
+  <div class="alert alert-warning d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+    <span>Esta caja está abierta desde el {{ c.fecApertura | date:'dd/MM/yyyy' }}. Ciérrela y abra una nueva para
+      poder cobrar hoy.</span>
+  </div>
+  }
+
+  <div class="caja-estado mb-3">
+    <div>
+      <span class="badge text-bg-success me-2">ABIERTA</span>
+      <strong>{{ c.numero }}</strong>
+      <span class="text-secondary ms-2">desde {{ c.fecApertura | date:'dd/MM/yyyy HH:mm' }} · {{ c.usuario }}</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn caja-btn" (click)="irAVentas.emit()"><i class="bi bi-cart me-1"
+          aria-hidden="true"></i>Ir a vender</button>
+      <button type="button" class="btn btn-light border" (click)="cargarActual()">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i><span class="visually-hidden">Actualizar</span>
+      </button>
+      <button type="button" class="btn btn-outline-success" (click)="abrirMovimiento('INGRESO')">
+        <i class="bi bi-box-arrow-in-down me-1" aria-hidden="true"></i>Entrada
+      </button>
+      <button type="button" class="btn btn-outline-danger" (click)="abrirMovimiento('EGRESO')">
+        <i class="bi bi-box-arrow-up me-1" aria-hidden="true"></i>Salida
+      </button>
+      <button type="button" class="btn caja-btn-oscuro" (click)="iniciarCierre(c)">
+        <i class="bi bi-lock me-1" aria-hidden="true"></i>Cerrar caja
+      </button>
+    </div>
+  </div>
+
+  <ng-container *ngTemplateOutlet="vistaArqueo; context: { $implicit: c }"></ng-container>
+  }
+  }
+
+  <!-- =============================================== HISTORIAL =============================================== -->
+  @if (pestana() === 'historial') {
+  <div class="caja-bloque py-2 mb-3 d-flex flex-wrap align-items-end gap-2">
+    <div>
+      <label for="cajDesde" class="form-label small mb-1">Desde</label>
+      <input id="cajDesde" type="date" class="form-control form-control-sm" [(ngModel)]="desde"
+        (ngModelChange)="cargarHistorial()">
+    </div>
+    <div>
+      <label for="cajHasta" class="form-label small mb-1">Hasta</label>
+      <input id="cajHasta" type="date" class="form-control form-control-sm" [(ngModel)]="hasta"
+        (ngModelChange)="cargarHistorial()">
+    </div>
+    <div>
+      <label for="cajEstado" class="form-label small mb-1">Estado</label>
+      <select id="cajEstado" class="form-select form-select-sm" [(ngModel)]="filtroEstado"
+        (ngModelChange)="cargarHistorial()">
+        <option value="">Todas</option>
+        <option value="ABIERTA">Abiertas</option>
+        <option value="CERRADA">Cerradas</option>
+      </select>
+    </div>
+    <div class="ms-auto d-flex flex-wrap gap-3 small text-secondary">
+      <span>Vendido: <strong class="text-dark">S/ {{ resumenHistorial().vendido | number:'1.2-2' }}</strong></span>
+      <span>Abiertas: <strong class="text-dark">{{ resumenHistorial().abiertas }}</strong></span>
+      <span>Con faltante: <strong class="text-danger">{{ resumenHistorial().faltantes }}</strong></span>
+      <span>Con sobrante: <strong class="text-primary">{{ resumenHistorial().sobrantes }}</strong></span>
+    </div>
+  </div>
+
+  <div class="caja-bloque p-0 overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm align-middle mb-0 text-nowrap">
+        <thead class="table-light text-uppercase small text-secondary">
+          <tr>
+            <th class="ps-3">Caja</th>
+            <th>Responsable</th>
+            <th>Apertura</th>
+            <th>Cierre</th>
+            <th class="text-end">Fondo</th>
+            <th class="text-end">Ventas</th>
+            <th class="text-end">Esperado</th>
+            <th class="text-end">Contado</th>
+            <th class="text-end">Diferencia</th>
+            <th>Estado</th>
+            <th class="pe-3 text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (cargandoHistorial() && historial().length === 0) {
+          <tr><td colspan="11" class="text-center py-4 text-secondary">Cargando...</td></tr>
+          }
+          @for (f of historial(); track f.idCaja) {
+          <tr>
+            <td class="ps-3 fw-semibold">{{ f.numero }}</td>
+            <td>{{ f.usuario }}<div class="small text-secondary">{{ f.nombreUsuario }}</div></td>
+            <td class="text-secondary">{{ f.fecApertura | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="text-secondary">{{ f.fecCierre ? (f.fecCierre | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+            <td class="text-end">S/ {{ f.montoApertura | number:'1.2-2' }}
+              @if (f.entregadoPor) { <div class="small text-secondary">de {{ f.entregadoPor }}</div> }
+            </td>
+            <td class="text-end">S/ {{ f.totalVentas | number:'1.2-2' }}<div class="small text-secondary">{{ f.numVentas }}
+                {{ f.numVentas === 1 ? 'venta' : 'ventas' }}</div></td>
+            <td class="text-end">{{ f.efectivoEsperado !== null ? 'S/ ' + (f.efectivoEsperado | number:'1.2-2') : '-' }}</td>
+            <td class="text-end">{{ f.efectivoContado !== null ? 'S/ ' + (f.efectivoContado | number:'1.2-2') : '-' }}</td>
+            <td class="text-end fw-semibold" [ngClass]="f.diferencia !== null ? claseDiferencia(f.diferencia) : ''">
+              {{ f.diferencia !== null ? (f.diferencia | number:'1.2-2') : '-' }}
+            </td>
+            <td>
+              <span class="badge" [ngClass]="f.estado === 'ABIERTA' ? 'text-bg-success' : 'text-bg-secondary'">{{ f.estado
+                }}</span>
+            </td>
+            <td class="pe-3 text-end">
+              <div class="d-flex justify-content-end gap-1">
+                @if (f.estado === 'ABIERTA' && puedeCerrarAjena && esAjena(f)) {
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="cerrarAjena(f)">Cerrar</button>
+                }
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="verDetalle(f)">Ver
+                  detalle</button>
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          @if (!cargandoHistorial()) {
+          <tr><td colspan="11" class="text-center py-5 text-secondary">No hay cajas para mostrar.</td></tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- =============================================== VENTANA: DETALLE DEL HISTORIAL =============================================== -->
+@if (detalleHistorial(); as d) {
+<div class="caja-velo" role="dialog" aria-modal="true" aria-label="Detalle de la caja">
+  <div class="caja-ventana caja-ventana-ancha">
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+      <h5 class="fw-bold mb-0">Caja {{ d.numero }}</h5>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-light border" (click)="imprimir()">
+          <i class="bi bi-printer me-1" aria-hidden="true"></i>Imprimir
+        </button>
+        <button type="button" class="btn-close" aria-label="Cerrar" (click)="detalleHistorial.set(null)"></button>
+      </div>
+    </div>
+    <ng-container *ngTemplateOutlet="vistaArqueo; context: { $implicit: d }"></ng-container>
+  </div>
+</div>
+}
+
+<!-- =============================================== VENTANA: ENTRADA / SALIDA =============================================== -->
+@if (mostrarMovimiento()) {
+<div class="caja-velo" role="dialog" aria-modal="true" aria-labelledby="movTitulo">
+  <div class="caja-ventana">
+    <h5 id="movTitulo" class="fw-bold mb-1">{{ movTipo === 'INGRESO' ? 'Entrada de efectivo' : 'Salida de efectivo' }}
+    </h5>
+    <p class="small text-secondary">
+      @if (movTipo === 'INGRESO') {
+      Dinero que entra a la caja y no es una venta. Ejemplo: más sencillo.
+      } @else {
+      Dinero que sale de la caja. Ejemplo: pago de un delivery o retiro para depositar en el banco.
+      }
+    </p>
+    @if (error()) { <div class="alert alert-danger py-2">{{ error() }}</div> }
+    <label for="movMonto" class="form-label small mb-1">Monto (S/)</label>
+    <input id="movMonto" type="number" min="0.01" step="0.10" class="form-control" [(ngModel)]="movMonto"
+      [class.is-invalid]="!!errorMovimiento()">
+    @if (errorMovimiento()) { <div class="invalid-feedback d-block">{{ errorMovimiento() }}</div> }
+    <label for="movMotivo" class="form-label small mt-2 mb-1">Motivo</label>
+    <input id="movMotivo" class="form-control" maxlength="200" [(ngModel)]="movMotivo">
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button type="button" class="btn btn-light border" (click)="mostrarMovimiento.set(false)">Cancelar</button>
+      <button type="button" class="btn caja-btn" [disabled]="enviando() || movMonto === null || !!errorMovimiento()"
+        (click)="guardarMovimiento()">Registrar</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- =============================================== VENTANA: CIERRE / ARQUEO =============================================== -->
+@if (cierreDe(); as c) {
+<div class="caja-velo" role="dialog" aria-modal="true" aria-labelledby="cierreTitulo">
+  <div class="caja-ventana">
+    <h5 id="cierreTitulo" class="fw-bold mb-1">Cerrar caja {{ c.numero }}</h5>
+    <p class="small text-secondary mb-3">
+      @if (c.usuario.toLowerCase() !== (cuenta() ?? '').toLowerCase()) {
+      Está cerrando la caja de <strong>{{ c.usuario }}</strong>. Cuente el efectivo en presencia del responsable.
+      } @else {
+      Cuente el efectivo que hay en la caja. Yape, Plin, transferencias y tarjeta no se cuentan: se revisan en el
+      celular y el banco.
+      }
+    </p>
+    @if (error()) { <div class="alert alert-danger py-2">{{ error() }}</div> }
+
+    <ng-container *ngTemplateOutlet="contador; context: { $implicit: cierre, id: 'ci' }"></ng-container>
+
+    <div class="cierre-cuadre mt-3">
+      <div><span>Debería haber</span><strong>S/ {{ c.efectivoEsperado | number:'1.2-2' }}</strong></div>
+      <div><span>Contó</span><strong>S/ {{ cierre.total() | number:'1.2-2' }}</strong></div>
+      <div [ngClass]="claseDiferencia(diferenciaCierre())">
+        <span>{{ textoDiferencia(diferenciaCierre()) }}</span>
+        <strong>S/ {{ diferenciaCierre() | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <label for="obsCierre" class="form-label small mt-3 mb-1">
+      Observación {{ diferenciaCierre() !== 0 ? '(obligatoria: explique la diferencia)' : '(opcional)' }}
+    </label>
+    <textarea id="obsCierre" class="form-control" rows="2" maxlength="200" [(ngModel)]="obsCierre"
+      (ngModelChange)="confirmarCierre.set(false)"></textarea>
+    @if (!cierre.vacio() && errorCierre()) { <div class="text-danger small mt-1">{{ errorCierre() }}</div> }
+
+    @if (confirmarCierre()) {
+    <div class="alert alert-warning py-2 mt-3 mb-0 small">
+      Al cerrar ya no podrá cobrar en esta caja y el arqueo no se puede cambiar. Pulse otra vez para confirmar.
+    </div>
+    }
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button type="button" class="btn btn-light border" (click)="cancelarCierre()">Cancelar</button>
+      <button type="button" class="btn caja-btn-oscuro" [disabled]="enviando() || !!errorCierre()" (click)="cerrarCaja()">
+        @if (enviando()) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+        {{ confirmarCierre() ? 'Sí, cerrar la caja' : 'Cerrar caja' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- =============================================== PLANTILLAS =============================================== -->
+
+<!-- Conteo del efectivo: total directo o por billetes y monedas -->
+<ng-template #contador let-k let-id="id">
+  <div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" role="switch" [id]="id + 'Den'" [(ngModel)]="k.usarDenominaciones"
+      (ngModelChange)="confirmarCierre.set(false)">
+    <label class="form-check-label small" [for]="id + 'Den'">Contar por billetes y monedas</label>
+  </div>
+  @if (k.usarDenominaciones) {
+  <div class="denominaciones">
+    @for (d of DENOMINACIONES; track d) {
+    <label class="denominacion" [class.moneda]="d < 10">
+      <span>S/ {{ d < 1 ? (d | number:'1.2-2') : d }}</span>
+      <input type="number" min="0" step="1" class="form-control form-control-sm" placeholder="0"
+        [(ngModel)]="k.porDenominacion[d]" (ngModelChange)="confirmarCierre.set(false)"
+        [attr.aria-label]="'Cantidad de S/ ' + d">
+    </label>
+    }
+  </div>
+  } @else {
+  <label [for]="id + 'Monto'" class="form-label small mb-1">Efectivo (S/)</label>
+  <input [id]="id + 'Monto'" type="number" min="0" step="0.10" class="form-control form-control-lg" placeholder="0.00"
+    [(ngModel)]="k.montoDirecto" (ngModelChange)="confirmarCierre.set(false)">
+  }
+</ng-template>
+
+<!-- Resumen de un turno: sirve para la caja abierta, el arqueo recién cerrado y el historial -->
+<ng-template #vistaArqueo let-c>
+  <div class="arqueo">
+    <div class="arqueo-cabecera solo-impresion">
+      <h4>Arqueo de caja {{ c.numero }}</h4>
+      <div>Responsable: {{ c.usuario }} ({{ c.nombreUsuario }})</div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-xl">
+        <div class="arqueo-tarjeta"><span>Fondo inicial</span><strong>S/ {{ c.montoApertura | number:'1.2-2' }}</strong></div>
+      </div>
+      <div class="col-6 col-xl">
+        <div class="arqueo-tarjeta"><span>Ventas en efectivo</span><strong>S/ {{ c.ventasEfectivo | number:'1.2-2'
+            }}</strong></div>
+      </div>
+      <div class="col-6 col-xl">
+        <div class="arqueo-tarjeta"><span>Entradas</span><strong class="text-success">+ S/ {{ c.ingresos |
+            number:'1.2-2' }}</strong></div>
+      </div>
+      <div class="col-6 col-xl">
+        <div class="arqueo-tarjeta"><span>Salidas</span><strong class="text-danger">- S/ {{ c.egresos | number:'1.2-2'
+            }}</strong></div>
+      </div>
+      <div class="col-12 col-xl">
+        <div class="arqueo-tarjeta destacada"><span>Efectivo esperado</span><strong>S/ {{ c.efectivoEsperado |
+            number:'1.2-2' }}</strong></div>
+      </div>
+    </div>
+
+    @if (c.estado === 'CERRADA') {
+    <div class="caja-bloque arqueo-cierre mb-3">
+      <div><span>Cierre</span><strong>{{ c.fecCierre | date:'dd/MM/yyyy HH:mm' }}</strong><small>por {{ c.cerradoPor
+          }}</small></div>
+      <div><span>Efectivo contado</span><strong>S/ {{ c.efectivoContado | number:'1.2-2' }}</strong></div>
+      <div [ngClass]="claseDiferencia(c.diferencia)"><span>{{ textoDiferencia(c.diferencia) }}</span><strong>S/ {{
+          c.diferencia | number:'1.2-2' }}</strong></div>
+      @if (c.obsCierre) { <p class="mb-0 small text-secondary w-100">Observación: {{ c.obsCierre }}</p> }
+    </div>
+    }
+
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <section class="caja-bloque h-100">
+          <h6 class="fw-bold">Vendido por medio de pago</h6>
+          <ul class="list-unstyled mb-2">
+            @for (p of c.porMetodo; track p.codigo) {
+            <li class="d-flex justify-content-between py-1 border-bottom">
+              <span>{{ p.metodo }} <small class="text-secondary">· {{ p.ventas }}</small>
+                @if (p.codigo === 'EFECTIVO') { <small class="badge text-bg-light border ms-1">en caja</small> }
+              </span>
+              <strong>S/ {{ p.total | number:'1.2-2' }}</strong>
+            </li>
+            } @empty {
+            <li class="text-secondary small">Todavía no hay ventas cobradas en esta caja.</li>
+            }
+          </ul>
+          <div class="d-flex justify-content-between fw-bold">
+            <span>Total ({{ c.numVentas }} {{ c.numVentas === 1 ? 'venta' : 'ventas' }})</span>
+            <span>S/ {{ c.totalVentas | number:'1.2-2' }}</span>
+          </div>
+          @if (c.numAnuladas > 0) {
+          <div class="small text-danger mt-1">{{ c.numAnuladas }} {{ c.numAnuladas === 1 ? 'venta anulada' : 'ventas anuladas'
+            }} (no suman)</div>
+          }
+          @if (c.entregadoPor) {
+          <div class="small text-secondary mt-2">Fondo entregado por: <strong>{{ c.nombreEntregadoPor }}</strong> ({{
+            c.entregadoPor }})</div>
+          }
+          @if (c.obsApertura) { <div class="small text-secondary mt-2">Apertura: {{ c.obsApertura }}</div> }
+        </section>
+      </div>
+      <div class="col-lg-7">
+        <section class="caja-bloque h-100">
+          <h6 class="fw-bold">Entradas y salidas de efectivo</h6>
+          @if (c.movimientos.length === 0) {
+          <p class="text-secondary small mb-0">Sin movimientos.</p>
+          } @else {
+          <table class="table table-sm mb-0">
+            <tbody>
+              @for (m of c.movimientos; track m.idMovimiento) {
+              <tr>
+                <td class="text-secondary text-nowrap">{{ m.fecha | date:'HH:mm' }}</td>
+                <td>{{ m.motivo }}<div class="small text-secondary">{{ m.usuario }}</div></td>
+                <td class="text-end text-nowrap fw-semibold" [class.text-success]="m.tipo === 'INGRESO'"
+                  [class.text-danger]="m.tipo === 'EGRESO'">
+                  {{ m.tipo === 'INGRESO' ? '+' : '-' }} S/ {{ m.monto | number:'1.2-2' }}
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+          }
+        </section>
+      </div>
+    </div>
+
+    <section class="caja-bloque mt-3 p-0 overflow-hidden">
+      <h6 class="fw-bold px-3 pt-3">Ventas del turno</h6>
+      <div class="table-responsive arqueo-ventas">
+        <table class="table table-sm table-hover mb-0 align-middle text-nowrap">
+          <thead class="table-light small text-secondary text-uppercase">
+            <tr>
+              <th class="ps-3">Venta</th>
+              <th>Hora</th>
+              <th>Cliente</th>
+              <th>Comprobante</th>
+              <th>Pago</th>
+              <th class="text-end pe-3">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of c.ventas; track v.idVenta) {
+            <tr [class.anulada]="v.estado === 'ANULADA'">
+              <td class="ps-3 fw-semibold">{{ v.numero }}</td>
+              <td class="text-secondary">{{ v.fecVenta | date:'HH:mm' }}</td>
+              <td class="text-truncate">{{ v.cliente }}</td>
+              <td class="font-monospace small">{{ v.comprobante || '-' }}</td>
+              <td>{{ v.metodo }}</td>
+              <td class="text-end pe-3">
+                S/ {{ v.total | number:'1.2-2' }}
+                @if (v.estado === 'ANULADA') { <span class="badge text-bg-danger ms-1">ANULADA</span> }
+              </td>
+            </tr>
+            } @empty {
+            <tr><td colspan="6" class="text-center text-secondary py-3">Sin ventas cobradas en esta caja.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</ng-template>
+
+}
