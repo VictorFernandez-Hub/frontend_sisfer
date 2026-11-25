@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BuscadorComponent } from '../../../shared/components/buscador/buscador.component';
 import { extraerMensajeError } from '../../../shared/utils/http-error.util';
+import { descargarExcel, imprimirPdf } from '../../../shared/utils/exportar.util';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Producto, NivelStock } from '../../productos/modelos/producto.model';
@@ -44,6 +45,10 @@ export class InventarioListaComponent implements OnInit {
   errorMessage = signal<string>('');
   termino = signal<string>('');
   filtroNivel = signal<FiltroNivel>('TODOS');
+  filtroCategoria = signal<string>('');   // vacío = todas las categorías
+  filtroMarca = signal<string>('');       // vacío = todas las marcas
+  filtroProveedor = signal<string>('');   // vacío = todos los proveedores
+  soloReponer = signal<boolean>(false);   // solo los que están por debajo del mínimo
 
   productoAjuste: Producto | null = null;
   motivoAjuste: MotivoAjuste = 'MERMA';
@@ -65,10 +70,31 @@ export class InventarioListaComponent implements OnInit {
     };
   });
 
-  // Productos que se ven en la tabla (según buscador y filtro)
+  // Categorías y marcas que existen en el inventario (para los filtros desplegables)
+  categorias = computed(() =>
+    [...new Set(this.productos().map(p => p.categoria ?? '').filter(c => c))].sort((a, b) => a.localeCompare(b))
+  );
+  marcas = computed(() =>
+    [...new Set(this.productos().map(p => p.marca ?? '').filter(m => m))].sort((a, b) => a.localeCompare(b))
+  );
+
+  proveedores = computed(() =>
+    [...new Set(this.productos().map(p => p.proveedor ?? '').filter(v => v))].sort((a, b) => a.localeCompare(b))
+  );
+
+  hayFiltros = computed(() =>
+    this.filtroNivel() !== 'TODOS' || !!this.filtroCategoria() || !!this.filtroMarca() ||
+    !!this.filtroProveedor() || this.soloReponer()
+  );
+
+  // Productos que se ven en la tabla (según buscador y filtros)
   productosFiltrados = computed(() => {
     const t = this.termino().trim().toLowerCase();
     const nivel = this.filtroNivel();
+    const categoria = this.filtroCategoria();
+    const marca = this.filtroMarca();
+    const proveedor = this.filtroProveedor();
+    const reponer = this.soloReponer();
 
     return this.productos()
       .filter(p => {
@@ -78,7 +104,12 @@ export class InventarioListaComponent implements OnInit {
           (p.categoria ?? '').toLowerCase().includes(t) ||
           (p.marca ?? '').toLowerCase().includes(t);
         const coincideNivel = nivel === 'TODOS' || this.nivelDe(p) === nivel;
-        return coincideTexto && coincideNivel;
+        const coincideCategoria = !categoria || (p.categoria ?? '') === categoria;
+        const coincideMarca = !marca || (p.marca ?? '') === marca;
+        const coincideProveedor = !proveedor || (p.proveedor ?? '') === proveedor;
+        const coincideReponer = !reponer || this.faltanteDe(p) > 0;
+        return coincideTexto && coincideNivel && coincideCategoria && coincideMarca &&
+          coincideProveedor && coincideReponer;
       })
       .sort((a, b) =>
         PRIORIDAD[this.nivelDe(a)] - PRIORIDAD[this.nivelDe(b)] ||
@@ -113,6 +144,72 @@ export class InventarioListaComponent implements OnInit {
   // Si se vuelve a tocar el mismo filtro, se quita y vuelve a "todos"
   elegirFiltro(nivel: FiltroNivel): void {
     this.filtroNivel.set(this.filtroNivel() === nivel ? 'TODOS' : nivel);
+  }
+
+  cambiarNivel(event: Event): void {
+    this.filtroNivel.set((event.target as HTMLSelectElement).value as FiltroNivel);
+  }
+
+  cambiarCategoria(event: Event): void {
+    this.filtroCategoria.set((event.target as HTMLSelectElement).value);
+  }
+
+  cambiarMarca(event: Event): void {
+    this.filtroMarca.set((event.target as HTMLSelectElement).value);
+  }
+
+  cambiarProveedor(event: Event): void {
+    this.filtroProveedor.set((event.target as HTMLSelectElement).value);
+  }
+
+  cambiarReponer(event: Event): void {
+    this.soloReponer.set((event.target as HTMLInputElement).checked);
+  }
+
+  limpiarFiltros(): void {
+    this.filtroNivel.set('TODOS');
+    this.filtroCategoria.set('');
+    this.filtroMarca.set('');
+    this.filtroProveedor.set('');
+    this.soloReponer.set(false);
+  }
+
+  // ---------------------------------------------------------- exportar
+
+  private encabezadosExport(): string[] {
+    return ['Código', 'Producto', 'Categoría', 'Marca', 'Proveedor', 'Stock actual', 'Unidad',
+      'Mínimo', 'Falta', 'Valor (S/)', 'Nivel'];
+  }
+
+  private filasExport(): (string | number)[][] {
+    return this.productosFiltrados().map(p => [
+      p.codigo, p.nombre, p.categoria ?? '', p.marca ?? '', p.proveedor ?? 'Sin proveedor',
+      Number(p.stock_actual ?? 0), p.unidad_codigo ?? '', Number(p.stock_minimo ?? 0),
+      this.faltanteDe(p), this.valorDe(p).toFixed(2), this.textoNivel(p)
+    ]);
+  }
+
+  private textoFiltros(): string {
+    const partes: string[] = [];
+    if (this.filtroNivel() !== 'TODOS') partes.push(`Nivel: ${this.filtroNivel()}`);
+    if (this.filtroCategoria()) partes.push(`Categoría: ${this.filtroCategoria()}`);
+    if (this.filtroMarca()) partes.push(`Marca: ${this.filtroMarca()}`);
+    if (this.filtroProveedor()) partes.push(`Proveedor: ${this.filtroProveedor()}`);
+    if (this.soloReponer()) partes.push('Solo los que hay que reponer');
+    if (this.termino().trim()) partes.push(`Búsqueda: ${this.termino().trim()}`);
+    return partes.length ? partes.join(' · ') : 'Sin filtros';
+  }
+
+  exportarExcel(): void {
+    descargarExcel('inventario', this.encabezadosExport(), this.filasExport());
+  }
+
+  exportarPdf(): void {
+    const valor = this.productosFiltrados().reduce((suma, p) => suma + this.valorDe(p), 0);
+    const sub = `${this.textoFiltros()} — ${this.productosFiltrados().length} productos; valor S/ ${valor.toFixed(2)}`;
+    if (!imprimirPdf('Inventario', sub, this.encabezadosExport(), this.filasExport())) {
+      this.notificacion.mostrar('El navegador bloqueó la ventana. Permita las ventanas emergentes e intente de nuevo.', 'error');
+    }
   }
 
   nivelDe(p: Producto): NivelStock {

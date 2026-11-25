@@ -4,6 +4,16 @@
     <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
     <span>Actualizar</span>
   </button>
+  <button type="button" class="btn btn-light d-flex align-items-center gap-2 shadow-sm"
+    (click)="exportarExcel()" [disabled]="cargando()" title="Descarga lo que se ve en la tabla (con los filtros)">
+    <i class="bi bi-file-earmark-excel" aria-hidden="true"></i>
+    <span>Excel</span>
+  </button>
+  <button type="button" class="btn btn-light d-flex align-items-center gap-2 shadow-sm"
+    (click)="exportarPdf()" [disabled]="cargando()" title="Abre la tabla filtrada lista para guardar como PDF">
+    <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+    <span>PDF</span>
+  </button>
 </div>
 
 <div class="container-fluid mt-4">
@@ -44,8 +54,59 @@
     (alBuscar)="filtrarMovimientos($event)">
   </app-buscador>
 
-  <!-- Filtro por fechas -->
+  <!-- Filtros: tipo de movimiento, producto y rango de fechas -->
   <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+    <div>
+      <label for="kardexTipo" class="form-label text-white small mb-1">Tipo de movimiento</label>
+      <select id="kardexTipo" class="form-select form-select-sm"
+        [value]="filtroTipo()" (change)="cambiarTipo($event)">
+        <option value="">Todos</option>
+        <option value="ENTRADA_COMPRA">Entrada por compra</option>
+        <option value="SALIDA_VENTA">Salida por venta</option>
+        <option value="AJUSTE_ENTRADA">Ajuste de entrada</option>
+        <option value="AJUSTE_SALIDA">Ajuste de salida</option>
+        <option value="ANULACION_COMPRA">Anulación de compra</option>
+        <option value="ANULACION_VENTA">Anulación de venta</option>
+      </select>
+    </div>
+    <div>
+      <label for="kardexProducto" class="form-label text-white small mb-1">Producto</label>
+      <select id="kardexProducto" class="form-select form-select-sm"
+        [value]="filtroProducto()" (change)="cambiarProducto($event)">
+        <option value="">Todos</option>
+        @for (nombre of productosEnLista(); track nombre) {
+        <option [value]="nombre">{{ nombre }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label for="kardexDocumento" class="form-label text-white small mb-1">Documento</label>
+      <select id="kardexDocumento" class="form-select form-select-sm"
+        [value]="filtroDocumento()" (change)="cambiarDocumento($event)">
+        <option value="">Todos</option>
+        <option value="COMPRA">Compra</option>
+        <option value="VENTA">Venta</option>
+        <option value="AJUSTE">Ajuste</option>
+      </select>
+    </div>
+    <div>
+      <label for="kardexUsuario" class="form-label text-white small mb-1">Usuario</label>
+      <select id="kardexUsuario" class="form-select form-select-sm"
+        [value]="filtroUsuario()" (change)="cambiarUsuario($event)">
+        <option value="">Todos</option>
+        @for (u of usuariosEnLista(); track u) {
+        <option [value]="u">{{ u }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="form-label text-white small mb-1 d-block">Período</label>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Períodos rápidos">
+        <button type="button" class="btn btn-light" (click)="rangoHoy()">Hoy</button>
+        <button type="button" class="btn btn-light" (click)="rangoEstaSemana()">Esta semana</button>
+        <button type="button" class="btn btn-light" (click)="rangoEsteMes()">Este mes</button>
+      </div>
+    </div>
     <div>
       <label for="kardexDesde" class="form-label text-white small mb-1">Desde</label>
       <input id="kardexDesde" type="date" class="form-control form-control-sm"
@@ -56,8 +117,8 @@
       <input id="kardexHasta" type="date" class="form-control form-control-sm"
         [value]="hasta()" (change)="cambiarHasta($event)">
     </div>
-    @if (desde() || hasta()) {
-    <button type="button" class="btn btn-sm btn-light" (click)="limpiarFechas()">Quitar fechas</button>
+    @if (hayFiltros()) {
+    <button type="button" class="btn btn-sm btn-light" (click)="limpiarFiltros()">Quitar filtros</button>
     }
   </div>
 
@@ -121,7 +182,7 @@
               @if (movimientos().length === 0) {
               <span>Aún no hay movimientos. Se registran solos al confirmar una compra, una venta o un ajuste.</span>
               } @else {
-              <span>Ningún movimiento coincide con la búsqueda, el filtro o las fechas</span>
+              <span>Ningún movimiento coincide con la búsqueda o los filtros</span>
               }
             </td>
           </tr>
