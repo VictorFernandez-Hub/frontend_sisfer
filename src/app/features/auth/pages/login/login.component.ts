@@ -140,6 +140,8 @@ export class LoginComponent implements OnInit {
     if (tiene('ALMACENERO')) return '/productos';
     // El vendedor empieza su turno en Ventas: si no abrió su caja, ahí se le pide la apertura
     if (tiene('VENDEDOR')) return '/ventas';
+    // El gerente consulta el negocio: empieza en el reporte de ventas
+    if (tiene('GERENTE')) return '/reportes';
     return '/clientes';
   }
 

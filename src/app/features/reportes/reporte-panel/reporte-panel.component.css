@@ -1,0 +1,218 @@
+.sin-acceso {
+  max-width: 32rem;
+}
+
+/* Misma barra que Ventas */
+.reportes-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  border-left: 6px solid #ffa500;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.reportes-barra h2 {
+  margin: 0;
+  color: #1f1f1f;
+  font-weight: 800;
+}
+
+.reportes-barra .form-label {
+  color: #6c757d;
+}
+
+.btn-naranja {
+  background-color: #f97316;
+  border-color: #f97316;
+}
+
+.btn-naranja:hover,
+.btn-naranja:focus-visible {
+  background-color: #ffa500;
+  border-color: #ffa500;
+}
+
+.btn-atajo-activo {
+  background: #ffa500;
+  border-color: #ffa500;
+  color: #1f1f1f;
+  font-weight: 600;
+}
+
+/* Alto fijo: el aviso de fechas no empuja las tarjetas */
+.aviso-fechas {
+  min-height: 1.5rem;
+  padding: 0.25rem 0.25rem 0;
+}
+
+/* Tarjetas como las de Ventas, con el movimiento de las de Kardex */
+.tarjeta-resumen {
+  background: #fff;
+  border-radius: 14px !important;
+  overflow: hidden;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.tarjeta-resumen .card-body {
+  border-top: 4px solid #ffa500;
+}
+
+.tarjeta-resumen:hover {
+  transform: translateY(-2px);
+}
+
+/* Al abrir el reporte, las tarjetas entran una tras otra */
+.tarjetas > div {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tarjetas > div:nth-child(2) { animation-delay: 0.04s; }
+.tarjetas > div:nth-child(3) { animation-delay: 0.08s; }
+.tarjetas > div:nth-child(4) { animation-delay: 0.12s; }
+
+/* Puesto en el ranking: los tres primeros en naranja */
+.puesto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #eef0f3;
+  color: #6c757d;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.puesto.podio {
+  background: #ffa500;
+  color: #1f1f1f;
+}
+
+/* Pestañas */
+.panel-pestanas {
+  background: #fff;
+  overflow: hidden;
+}
+
+.nav-tabs .nav-link {
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #1f1f1f;
+}
+
+.nav-tabs .nav-link.active {
+  color: #1f1f1f;
+  border-top: 3px solid #ffa500;
+}
+
+/* Alto mínimo: al cambiar de pestaña la tarjeta no se encoge ni salta */
+.contenido-pestana {
+  min-height: 16rem;
+}
+
+.tabla-reporte thead th {
+  background: #1f1f1f;
+  color: #fff;
+  font-weight: 600;
+  border: 0;
+  white-space: nowrap;
+}
+
+.tabla-reporte tbody tr {
+  transition: background 0.15s ease;
+}
+
+.tabla-reporte tbody tr:hover {
+  background: #fff8eb;
+}
+
+.tabla-reporte tfoot th,
+.tabla-reporte tfoot td {
+  background: #eef0f3;
+  border-bottom: 0;
+}
+
+.col-barra {
+  width: 40%;
+  min-width: 12rem;
+}
+
+.progress {
+  height: 0.6rem;
+  background: #eef0f3;
+}
+
+/* La barra crece desde cero al mostrarse la pestaña y al cambiar las fechas */
+.barra-naranja {
+  background: #ffa500;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: crecer 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes crecer {
+  from { width: 0; }
+}
+
+.porcentaje {
+  width: 3.5rem;
+  text-align: right;
+}
+
+.vacio {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+/* Entrada de cada pestaña, igual que global-modal */
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.girando {
+  display: inline-block;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .girando,
+  .animate-slide-up,
+  .tarjetas > div,
+  .barra-naranja {
+    animation: none;
+  }
+
+  .barra-naranja {
+    transition: none;
+  }
+
+  .tarjeta-resumen,
+  .tarjeta-resumen:hover {
+    transition: none;
+    transform: none;
+  }
+}

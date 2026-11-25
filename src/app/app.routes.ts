@@ -61,6 +61,11 @@ export const routes: Routes = [
           .then(m => m.CompraListaComponent)
       },
       {
+        path: 'reportes',
+        loadComponent: () => import('./features/reportes')
+          .then(m => m.ReportePanelComponent)
+      },
+      {
         path: 'usuarios',
         loadComponent: () => import('./features/usuarios')
           .then(m => m.UsuarioListaComponent)

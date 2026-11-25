@@ -1,0 +1,306 @@
+@if (!puedeConsultar) {
+<div class="container-fluid mt-5">
+  <div class="card shadow-sm border-0 rounded-3 mx-auto sin-acceso">
+    <div class="card-body text-center py-5">
+      <i class="bi bi-shield-lock fs-1 d-block mb-2 text-secondary" aria-hidden="true"></i>
+      <h5 class="fw-bold">Su rol no tiene acceso a Reportes</h5>
+      <p class="text-secondary mb-0">Reportes es para el administrador del negocio, el gerente y el administrador del sistema.</p>
+    </div>
+  </div>
+</div>
+} @else {
+
+<div class="container-fluid px-4 mt-4">
+  <!-- ===================== BARRA: periodo, atajos, actualizar y PDF ===================== -->
+  <header class="reportes-barra">
+    <h2>Reporte de ventas</h2>
+
+    <div class="d-flex flex-wrap align-items-end gap-2">
+      <div>
+        <label for="repDesde" class="form-label small mb-1">Desde</label>
+        <input id="repDesde" type="date" class="form-control form-control-sm" [max]="hasta || null"
+          [class.is-invalid]="errorFechas()" [(ngModel)]="desde" (ngModelChange)="cargar()">
+      </div>
+      <div>
+        <label for="repHasta" class="form-label small mb-1">Hasta</label>
+        <input id="repHasta" type="date" class="form-control form-control-sm" [min]="desde || null"
+          [class.is-invalid]="errorFechas()" [(ngModel)]="hasta" (ngModelChange)="cargar()">
+      </div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Periodos rápidos">
+        <button type="button" class="btn" [ngClass]="atajoActivo('hoy') ? 'btn-atajo-activo' : 'btn-outline-secondary'"
+          [attr.aria-pressed]="atajoActivo('hoy')" [disabled]="cargando()" (click)="usarAtajo('hoy')">Hoy</button>
+        <button type="button" class="btn" [ngClass]="atajoActivo('semana') ? 'btn-atajo-activo' : 'btn-outline-secondary'"
+          [attr.aria-pressed]="atajoActivo('semana')" [disabled]="cargando()" (click)="usarAtajo('semana')">Esta semana</button>
+        <button type="button" class="btn" [ngClass]="atajoActivo('mes') ? 'btn-atajo-activo' : 'btn-outline-secondary'"
+          [attr.aria-pressed]="atajoActivo('mes')" [disabled]="cargando()" (click)="usarAtajo('mes')">Este mes</button>
+      </div>
+      <button type="button" class="btn btn-light border d-flex align-items-center gap-2"
+        [disabled]="cargando()" (click)="cargar()">
+        <i class="bi bi-arrow-clockwise" [class.girando]="cargando()" aria-hidden="true"></i>
+        <span>Actualizar</span>
+      </button>
+      <button type="button" class="btn text-white d-flex align-items-center gap-2 shadow-sm btn-naranja"
+        [disabled]="descargando() || !!errorFechas()" (click)="descargarPdf()"
+        title="Descargar el reporte de ventas">
+        @if (descargando()) {
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        } @else {
+        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+        }
+        <span>Descargar PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- El lugar del mensaje está reservado: un error de fechas no mueve las tarjetas -->
+  <div class="aviso-fechas small text-danger" aria-live="polite">{{ errorFechas() }}</div>
+
+  <!-- ===================== RESUMEN DEL PERIODO: las tarjetas entran una tras otra ===================== -->
+  <div class="row g-3 mb-3 tarjetas">
+    <div class="col-6 col-lg-3">
+      <div class="card tarjeta-resumen h-100 shadow-sm border-0">
+        <div class="card-body py-2">
+          <div class="small text-secondary text-uppercase"><i class="bi bi-cash-stack me-1" aria-hidden="true"></i>Total vendido</div>
+          <div class="fs-3 fw-bold text-dark text-truncate">S/ {{ (resumen()?.totalVendido ?? 0) | number:'1.2-2' }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card tarjeta-resumen h-100 shadow-sm border-0">
+        <div class="card-body py-2">
+          <div class="small text-secondary text-uppercase"><i class="bi bi-receipt me-1" aria-hidden="true"></i>N.º ventas</div>
+          <div class="fs-3 fw-bold text-dark">{{ resumen()?.numVentas ?? 0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card tarjeta-resumen h-100 shadow-sm border-0">
+        <div class="card-body py-2">
+          <div class="small text-secondary text-uppercase"><i class="bi bi-graph-up me-1" aria-hidden="true"></i>Ticket promedio</div>
+          <div class="fs-3 fw-bold text-dark text-truncate">S/ {{ (resumen()?.ticketPromedio ?? 0) | number:'1.2-2' }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card tarjeta-resumen h-100 shadow-sm border-0">
+        <div class="card-body py-2">
+          <div class="small text-secondary text-uppercase"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Anuladas</div>
+          <div class="fs-3 fw-bold text-danger">{{ resumen()?.numAnuladas ?? 0 }}</div>
+          <div class="small text-secondary text-truncate">S/ {{ (resumen()?.montoAnuladas ?? 0) | number:'1.2-2' }} devueltos al stock</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DETALLE POR PESTAÑAS ===================== -->
+  <div class="card shadow-sm border-0 rounded-3 mb-4 panel-pestanas">
+    <div class="card-header bg-white border-0 pt-3 px-3 pb-0">
+      <ul class="nav nav-tabs flex-nowrap overflow-auto" role="tablist">
+        @for (p of pestanas; track p.id) {
+        <li class="nav-item" role="presentation">
+          <button type="button" class="nav-link d-flex align-items-center gap-2 text-nowrap" role="tab"
+            [class.active]="pestana() === p.id" [attr.aria-selected]="pestana() === p.id"
+            (click)="elegirPestana(p.id)">
+            <i class="bi" [ngClass]="p.icono" aria-hidden="true"></i>
+            <span>{{ p.texto }}</span>
+            @if (p.id === 'alertas' && alertas().length > 0) {
+            <span class="badge rounded-pill bg-danger">{{ alertas().length }}</span>
+            }
+          </button>
+        </li>
+        }
+      </ul>
+    </div>
+
+    <div class="card-body p-0 contenido-pestana">
+      @if (cargaInicial()) {
+      <div class="text-center py-5 text-secondary">
+        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        Cargando reportes...
+      </div>
+      } @else {
+      @switch (pestana()) {
+
+      <!-- Medios de pago: cuánto entró por cada uno (cierre de caja) -->
+      @case ('metodos') {
+      <div class="animate-slide-up">
+        @if (metodos().length === 0) {
+        <div class="vacio">
+          <i class="bi bi-wallet2 fs-1 d-block mb-2" aria-hidden="true"></i>
+          No hay ventas cobradas en este periodo.
+        </div>
+        } @else {
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0 tabla-reporte">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-3">Medio de pago</th>
+                <th scope="col" class="text-end">Ventas</th>
+                <th scope="col" class="text-end">Monto</th>
+                <th scope="col" class="col-barra pe-3">% del total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of metodos(); track m.metodo) {
+              <tr>
+                <td class="ps-3 fw-semibold">{{ m.metodo }}</td>
+                <td class="text-end">{{ m.ventas }}</td>
+                <td class="text-end fw-semibold text-nowrap">S/ {{ m.monto | number:'1.2-2' }}</td>
+                <td class="pe-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" role="progressbar" [attr.aria-label]="'Porcentaje de ' + m.metodo"
+                      [attr.aria-valuenow]="porcentaje(m.monto, totalMetodos())" aria-valuemin="0" aria-valuemax="100">
+                      <div class="progress-bar barra-naranja" [style.width.%]="porcentaje(m.monto, totalMetodos())"></div>
+                    </div>
+                    <span class="small text-secondary porcentaje">{{ porcentaje(m.monto, totalMetodos()) | number:'1.1-1' }} %</span>
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row" class="ps-3">Total</th>
+                <td class="text-end fw-bold">{{ resumen()?.numVentas ?? 0 }}</td>
+                <td class="text-end fw-bold text-nowrap">S/ {{ totalMetodos() | number:'1.2-2' }}</td>
+                <td class="pe-3"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Más vendidos: ordenado por monto -->
+      @case ('vendidos') {
+      <div class="animate-slide-up">
+        @if (vendidos().length === 0) {
+        <div class="vacio">
+          <i class="bi bi-trophy fs-1 d-block mb-2" aria-hidden="true"></i>
+          No se vendieron productos en este periodo.
+        </div>
+        } @else {
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0 tabla-reporte">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-3">#</th>
+                <th scope="col">Código</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Categoría</th>
+                <th scope="col" class="text-end">Cantidad</th>
+                <th scope="col" class="text-end pe-3">Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of vendidos(); track p.codigo; let i = $index) {
+              <tr>
+                <td class="ps-3"><span class="puesto" [class.podio]="i < 3">{{ i + 1 }}</span></td>
+                <td class="font-monospace small text-secondary text-nowrap">{{ p.codigo }}</td>
+                <td class="fw-semibold">{{ p.producto }}</td>
+                <td class="text-secondary">{{ p.categoria }}</td>
+                <td class="text-end text-nowrap">{{ p.cantidad | number:'1.0-3' }} {{ p.unidad }}</td>
+                <td class="text-end fw-semibold pe-3 text-nowrap">S/ {{ p.monto | number:'1.2-2' }}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Por vendedor: quién registró las ventas cobradas -->
+      @case ('vendedores') {
+      <div class="animate-slide-up">
+        @if (vendedores().length === 0) {
+        <div class="vacio">
+          <i class="bi bi-person-badge fs-1 d-block mb-2" aria-hidden="true"></i>
+          No hay ventas cobradas en este periodo.
+        </div>
+        } @else {
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0 tabla-reporte">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-3">Vendedor</th>
+                <th scope="col">Usuario</th>
+                <th scope="col" class="text-end">Ventas</th>
+                <th scope="col" class="text-end pe-3">Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (v of vendedores(); track v.cuenta) {
+              <tr>
+                <td class="ps-3 fw-semibold">{{ v.vendedor }}</td>
+                <td class="text-secondary">{{ v.cuenta }}</td>
+                <td class="text-end">{{ v.ventas }}</td>
+                <td class="text-end fw-semibold pe-3 text-nowrap">S/ {{ v.monto | number:'1.2-2' }}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Alertas de stock: el stock de ahora, no depende de las fechas -->
+      @case ('alertas') {
+      <div class="animate-slide-up">
+        @if (alertas().length === 0) {
+        <div class="vacio">
+          <i class="bi bi-check2-circle fs-1 d-block mb-2" aria-hidden="true"></i>
+          Ningún producto está agotado ni en su stock mínimo.
+        </div>
+        } @else {
+        <div class="px-3 pt-3 small text-secondary">
+          {{ totalAgotados() }} {{ totalAgotados() === 1 ? 'agotado' : 'agotados' }} y
+          {{ alertas().length - totalAgotados() }} en stock mínimo.
+          No depende de las fechas elegidas.
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0 tabla-reporte">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-3">Código</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Categoría</th>
+                <th scope="col">Marca</th>
+                <th scope="col" class="text-end">Stock</th>
+                <th scope="col" class="text-end">Mínimo</th>
+                <th scope="col" class="pe-3">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of alertas(); track a.codigo) {
+              <tr>
+                <td class="ps-3 font-monospace small text-secondary text-nowrap">{{ a.codigo }}</td>
+                <td class="fw-semibold">{{ a.producto }}</td>
+                <td class="text-secondary">{{ a.categoria }}</td>
+                <td class="text-secondary">{{ a.marca }}</td>
+                <td class="text-end">{{ a.stockActual | number:'1.0-3' }}</td>
+                <td class="text-end text-secondary">{{ a.stockMinimo | number:'1.0-3' }}</td>
+                <td class="pe-3">
+                  @if (a.nivel === 'AGOTADO') {
+                  <span class="badge bg-danger">AGOTADO</span>
+                  } @else {
+                  <span class="badge bg-warning text-dark">STOCK MÍNIMO</span>
+                  }
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </div>
+      }
+      }
+      }
+    </div>
+  </div>
+</div>
+
+}
