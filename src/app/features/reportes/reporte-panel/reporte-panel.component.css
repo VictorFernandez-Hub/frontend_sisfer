@@ -37,6 +37,18 @@
   border-color: #ffa500;
 }
 
+/* Verde de Excel */
+.btn-excel {
+  background-color: #1d6f42;
+  border-color: #1d6f42;
+}
+
+.btn-excel:hover,
+.btn-excel:focus-visible {
+  background-color: #185c37;
+  border-color: #185c37;
+}
+
 .btn-atajo-activo {
   background: #ffa500;
   border-color: #ffa500;
@@ -73,7 +85,6 @@
 
 .tarjetas > div:nth-child(2) { animation-delay: 0.04s; }
 .tarjetas > div:nth-child(3) { animation-delay: 0.08s; }
-.tarjetas > div:nth-child(4) { animation-delay: 0.12s; }
 
 /* Puesto en el ranking: los tres primeros en naranja */
 .puesto {
@@ -98,6 +109,13 @@
 .panel-pestanas {
   background: #fff;
   overflow: hidden;
+}
+
+/* En pantallas angostas las pestañas se deslizan de lado, sin flechas arriba y abajo */
+.nav-tabs {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .nav-tabs .nav-link {
@@ -139,6 +157,40 @@
 .tabla-reporte tfoot td {
   background: #eef0f3;
   border-bottom: 0;
+}
+
+/* Número de ventas de cada filtro */
+.contador {
+  background: rgba(0, 0, 0, 0.12);
+  color: inherit;
+  font-weight: 600;
+}
+
+/* Lista larga: baja dentro de la tarjeta y la cabecera queda fija */
+.lista-ventas {
+  max-height: 26rem;
+  overflow-y: auto;
+}
+
+.lista-ventas thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.lista-ventas tfoot th,
+.lista-ventas tfoot td {
+  position: sticky;
+  bottom: 0;
+}
+
+/* Una anulada no suma: su monto va tachado */
+.fila-anulada td {
+  color: #6c757d;
+}
+
+.fila-anulada .monto {
+  text-decoration: line-through;
 }
 
 .col-barra {
@@ -189,17 +241,7 @@
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.girando {
-  display: inline-block;
-  animation: girar 0.8s linear infinite;
-}
-
-@keyframes girar {
-  to { transform: rotate(360deg); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .girando,
   .animate-slide-up,
   .tarjetas > div,
   .barra-naranja {

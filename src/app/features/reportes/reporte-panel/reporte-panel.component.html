@@ -11,7 +11,8 @@
 } @else {
 
 <div class="container-fluid px-4 mt-4">
-  <!-- ===================== BARRA: periodo, atajos, actualizar y PDF ===================== -->
+  <!-- ===================== BARRA: periodo, atajos, Excel y PDF ===================== -->
+  <!-- Al cambiar una fecha o tocar un atajo, el reporte se vuelve a cargar solo -->
   <header class="reportes-barra">
     <h2>Reporte de ventas</h2>
 
@@ -34,10 +35,15 @@
         <button type="button" class="btn" [ngClass]="atajoActivo('mes') ? 'btn-atajo-activo' : 'btn-outline-secondary'"
           [attr.aria-pressed]="atajoActivo('mes')" [disabled]="cargando()" (click)="usarAtajo('mes')">Este mes</button>
       </div>
-      <button type="button" class="btn btn-light border d-flex align-items-center gap-2"
-        [disabled]="cargando()" (click)="cargar()">
-        <i class="bi bi-arrow-clockwise" [class.girando]="cargando()" aria-hidden="true"></i>
-        <span>Actualizar</span>
+      <button type="button" class="btn text-white d-flex align-items-center gap-2 shadow-sm btn-excel"
+        [disabled]="descargandoExcel() || !!errorFechas()" (click)="descargarExcel()"
+        title="Descargar el reporte de ventas en Excel">
+        @if (descargandoExcel()) {
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        } @else {
+        <i class="bi bi-file-earmark-excel" aria-hidden="true"></i>
+        }
+        <span>Descargar Excel</span>
       </button>
       <button type="button" class="btn text-white d-flex align-items-center gap-2 shadow-sm btn-naranja"
         [disabled]="descargando() || !!errorFechas()" (click)="descargarPdf()"
@@ -57,37 +63,25 @@
 
   <!-- ===================== RESUMEN DEL PERIODO: las tarjetas entran una tras otra ===================== -->
   <div class="row g-3 mb-3 tarjetas">
-    <div class="col-6 col-lg-3">
+    <div class="col-12 col-md-4">
       <div class="card tarjeta-resumen h-100 shadow-sm border-0">
         <div class="card-body py-2">
           <div class="small text-secondary text-uppercase"><i class="bi bi-cash-stack me-1" aria-hidden="true"></i>Total vendido</div>
-          <div class="fs-3 fw-bold text-dark text-truncate">S/ {{ (resumen()?.totalVendido ?? 0) | number:'1.2-2' }}</div>
-        </div>
+          <div class="fs-3 fw-bold text-dark text-truncate">S/ {{ (resumen()?.totalVendido ?? 0) | number:'1.2-2' }}</div>        </div>
       </div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-6 col-md-4">
       <div class="card tarjeta-resumen h-100 shadow-sm border-0">
         <div class="card-body py-2">
-          <div class="small text-secondary text-uppercase"><i class="bi bi-receipt me-1" aria-hidden="true"></i>N.º ventas</div>
-          <div class="fs-3 fw-bold text-dark">{{ resumen()?.numVentas ?? 0 }}</div>
-        </div>
+          <div class="small text-secondary text-uppercase"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Ventas confirmadas</div>
+          <div class="fs-3 fw-bold text-success">{{ resumen()?.numVentas ?? 0 }}</div>        </div>
       </div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-6 col-md-4">
       <div class="card tarjeta-resumen h-100 shadow-sm border-0">
         <div class="card-body py-2">
-          <div class="small text-secondary text-uppercase"><i class="bi bi-graph-up me-1" aria-hidden="true"></i>Ticket promedio</div>
-          <div class="fs-3 fw-bold text-dark text-truncate">S/ {{ (resumen()?.ticketPromedio ?? 0) | number:'1.2-2' }}</div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-lg-3">
-      <div class="card tarjeta-resumen h-100 shadow-sm border-0">
-        <div class="card-body py-2">
-          <div class="small text-secondary text-uppercase"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Anuladas</div>
-          <div class="fs-3 fw-bold text-danger">{{ resumen()?.numAnuladas ?? 0 }}</div>
-          <div class="small text-secondary text-truncate">S/ {{ (resumen()?.montoAnuladas ?? 0) | number:'1.2-2' }} devueltos al stock</div>
-        </div>
+          <div class="small text-secondary text-uppercase"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Ventas anuladas</div>
+          <div class="fs-3 fw-bold text-danger">{{ resumen()?.numAnuladas ?? 0 }}</div>        </div>
       </div>
     </div>
   </div>
@@ -95,7 +89,7 @@
   <!-- ===================== DETALLE POR PESTAÑAS ===================== -->
   <div class="card shadow-sm border-0 rounded-3 mb-4 panel-pestanas">
     <div class="card-header bg-white border-0 pt-3 px-3 pb-0">
-      <ul class="nav nav-tabs flex-nowrap overflow-auto" role="tablist">
+      <ul class="nav nav-tabs flex-nowrap" role="tablist">
         @for (p of pestanas; track p.id) {
         <li class="nav-item" role="presentation">
           <button type="button" class="nav-link d-flex align-items-center gap-2 text-nowrap" role="tab"
@@ -120,6 +114,80 @@
       </div>
       } @else {
       @switch (pestana()) {
+
+      <!-- Ventas del periodo: una por una, con filtro de confirmadas y anuladas -->
+      @case ('ventas') {
+      <div class="animate-slide-up">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 pt-3 pb-2">
+          <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar por estado">
+            @for (f of filtros; track f.id) {
+            <button type="button" class="btn" [ngClass]="filtroEstado() === f.id ? 'btn-atajo-activo' : 'btn-outline-secondary'"
+              [attr.aria-pressed]="filtroEstado() === f.id" (click)="elegirFiltro(f.id)">
+              {{ f.texto }} <span class="badge rounded-pill contador">{{ cuantas(f.id) }}</span>
+            </button>
+            }
+          </div>        </div>
+        @if (ventasFiltradas().length === 0) {
+        <div class="vacio">
+          <i class="bi bi-receipt fs-1 d-block mb-2" aria-hidden="true"></i>
+          @switch (filtroEstado()) {
+          @case ('CONFIRMADA') { No hay ventas confirmadas en este periodo. }
+          @case ('ANULADA') { No hay ventas anuladas en este periodo. }
+          @default { No hay ventas en este periodo. }
+          }
+        </div>
+        } @else {
+        <div class="table-responsive lista-ventas">
+          <table class="table table-sm align-middle mb-0 tabla-reporte">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-3">N.º venta</th>
+                <th scope="col">Fecha y hora</th>
+                <th scope="col">Comprobante</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Vendedor</th>
+                <th scope="col">Medio de pago</th>
+                <th scope="col" class="text-end">Total</th>
+                <th scope="col" class="pe-3">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (v of ventasFiltradas(); track v.numero) {
+              <tr [class.fila-anulada]="v.estado === 'ANULADA'">
+                <td class="ps-3 fw-semibold text-nowrap">{{ v.numero }}</td>
+                <td class="text-nowrap">{{ v.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="font-monospace small text-secondary text-nowrap">{{ v.comprobante || '—' }}</td>
+                <td class="text-nowrap">{{ v.cliente }}</td>
+                <td class="text-secondary text-nowrap">{{ v.vendedor }}</td>
+                <td class="text-nowrap">{{ v.metodo }}</td>
+                <td class="text-end fw-semibold text-nowrap monto">S/ {{ v.total | number:'1.2-2' }}</td>
+                <td class="pe-3">
+                  @if (v.estado === 'ANULADA') {
+                  <span class="badge bg-danger">ANULADA</span>
+                  } @else {
+                  <span class="badge bg-success">CONFIRMADA</span>
+                  }
+                </td>
+              </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row" class="ps-3" colspan="6">
+                  {{ ventasFiltradas().length }} {{ ventasFiltradas().length === 1 ? 'venta' : 'ventas' }}
+                  <span class="fw-normal text-secondary ms-2">
+                    · {{ filtroEstado() === 'ANULADA' ? 'Monto anulado' : 'Cobrado' }}
+                  </span>
+                </th>
+                <td class="text-end fw-bold text-nowrap">S/ {{ totalFiltrado() | number:'1.2-2' }}</td>
+                <td class="pe-3"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        }
+      </div>
+      }
 
       <!-- Medios de pago: cuánto entró por cada uno (cierre de caja) -->
       @case ('metodos') {

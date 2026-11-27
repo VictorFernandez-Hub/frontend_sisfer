@@ -7,12 +7,13 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extraerMensajeError } from '../../../shared/utils/http-error.util';
 import {
-  AlertaStock, ProductoVendido, ResumenReporte, VentaPorMetodo, VentaPorVendedor
+  AlertaStock, ProductoVendido, ResumenReporte, VentaPorMetodo, VentaPorVendedor, VentaRegistro
 } from '../modelos/reporte.model';
 import { ReporteService } from '../servicios/reporte.service';
 
-type Pestana = 'metodos' | 'vendidos' | 'vendedores' | 'alertas';
+type Pestana = 'ventas' | 'metodos' | 'vendidos' | 'vendedores' | 'alertas';
 type Atajo = 'hoy' | 'semana' | 'mes';
+type FiltroEstado = 'TODAS' | 'CONFIRMADA' | 'ANULADA';
 
 interface OpcionPestana { id: Pestana; texto: string; icono: string; }
 
@@ -35,14 +36,23 @@ export class ReportePanelComponent implements OnInit {
   readonly puedeConsultar = this.authService.tieneRol(ROLES_REPORTES);
 
   readonly pestanas: OpcionPestana[] = [
+    { id: 'ventas', texto: 'Ventas del periodo', icono: 'bi-list-ul' },
     { id: 'metodos', texto: 'Medios de pago', icono: 'bi-wallet2' },
     { id: 'vendidos', texto: 'Más vendidos', icono: 'bi-trophy' },
     { id: 'vendedores', texto: 'Por vendedor', icono: 'bi-person-badge' },
     { id: 'alertas', texto: 'Alertas de stock', icono: 'bi-exclamation-triangle' }
   ];
-  pestana = signal<Pestana>('metodos');
+  pestana = signal<Pestana>('ventas');
+
+  readonly filtros: { id: FiltroEstado; texto: string }[] = [
+    { id: 'TODAS', texto: 'Todas' },
+    { id: 'CONFIRMADA', texto: 'Confirmadas' },
+    { id: 'ANULADA', texto: 'Anuladas' }
+  ];
+  filtroEstado = signal<FiltroEstado>('TODAS');
 
   resumen = signal<ResumenReporte | null>(null);
+  ventas = signal<VentaRegistro[]>([]);
   metodos = signal<VentaPorMetodo[]>([]);
   vendidos = signal<ProductoVendido[]>([]);
   vendedores = signal<VentaPorVendedor[]>([]);
@@ -52,6 +62,7 @@ export class ReportePanelComponent implements OnInit {
   cargando = signal<boolean>(false);
   cargaInicial = signal<boolean>(true);
   descargando = signal<boolean>(false);
+  descargandoExcel = signal<boolean>(false);
   errorFechas = signal<string>('');
 
   // Por defecto, el mes actual (igual que el backend)
@@ -61,6 +72,27 @@ export class ReportePanelComponent implements OnInit {
   // Base de los porcentajes: lo cobrado en el periodo
   totalMetodos = computed(() => this.metodos().reduce((suma, m) => suma + Number(m.monto), 0));
   totalAgotados = computed(() => this.alertas().filter(a => a.nivel === 'AGOTADO').length);
+
+  // Filtro de la lista de ventas: se aplica aquí, sin volver a pedir al backend
+  ventasFiltradas = computed(() => {
+    const f = this.filtroEstado();
+    return f === 'TODAS' ? this.ventas() : this.ventas().filter(v => v.estado === f);
+  });
+  // Igual que la tarjeta "Total vendido": una anulada no suma, salvo cuando se miran solo las anuladas
+  totalFiltrado = computed(() => {
+    const soloAnuladas = this.filtroEstado() === 'ANULADA';
+    return this.ventasFiltradas()
+      .filter(v => soloAnuladas || v.estado !== 'ANULADA')
+      .reduce((suma, v) => suma + Number(v.total), 0);
+  });
+
+  cuantas(f: FiltroEstado): number {
+    return f === 'TODAS' ? this.ventas().length : this.ventas().filter(v => v.estado === f).length;
+  }
+
+  elegirFiltro(f: FiltroEstado): void {
+    this.filtroEstado.set(f);
+  }
 
   ngOnInit(): void {
     // Un rol sin acceso que escribe la dirección a mano no llega a pedir nada al backend
@@ -75,6 +107,7 @@ export class ReportePanelComponent implements OnInit {
     this.cargando.set(true);
     forkJoin({
       resumen: this.reporteService.resumen(this.desde, this.hasta),
+      ventas: this.reporteService.ventas(this.desde, this.hasta),
       metodos: this.reporteService.porMetodo(this.desde, this.hasta),
       vendidos: this.reporteService.topProductos(this.desde, this.hasta, 10),
       vendedores: this.reporteService.porVendedor(this.desde, this.hasta),
@@ -82,6 +115,7 @@ export class ReportePanelComponent implements OnInit {
     }).subscribe({
       next: (d) => {
         this.resumen.set(d.resumen);
+        this.ventas.set(d.ventas);
         this.metodos.set(d.metodos);
         this.vendidos.set(d.vendidos);
         this.vendedores.set(d.vendedores);
@@ -195,6 +229,31 @@ export class ReportePanelComponent implements OnInit {
         this.descargando.set(false);
         ventana?.close();
         this.notificacion.mostrar(extraerMensajeError(err, 'No se pudo generar el PDF.'), 'error');
+      }
+    });
+  }
+
+  // ---------------------------------------------------------- Excel
+
+  // El Excel no se puede ver en el navegador: siempre se descarga
+  descargarExcel(): void {
+    if (!this.fechasValidas()) return;
+    this.descargandoExcel.set(true);
+    this.reporteService.excel(this.desde, this.hasta).subscribe({
+      next: (archivo) => {
+        this.descargandoExcel.set(false);
+        const url = URL.createObjectURL(archivo);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = `Reporte-ventas-${this.desde}_${this.hasta}.xlsx`;
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.descargandoExcel.set(false);
+        this.notificacion.mostrar(extraerMensajeError(err, 'No se pudo generar el Excel.'), 'error');
       }
     });
   }

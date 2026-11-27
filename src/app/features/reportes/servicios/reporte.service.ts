@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_URL } from '../../../core/constants/api.constants';
 import {
-  AlertaStock, ProductoVendido, ResumenReporte, VentaPorMetodo, VentaPorVendedor
+  AlertaStock, ProductoVendido, ResumenReporte, VentaPorMetodo, VentaPorVendedor, VentaRegistro
 } from '../modelos/reporte.model';
 
 @Injectable({
@@ -43,9 +43,21 @@ export class ReporteService {
       { params: this.rango(desde, hasta), withCredentials: true });
   }
 
+  // Todas las ventas del periodo, confirmadas y anuladas. El filtro se aplica en la pantalla
+  ventas(desde: string, hasta: string): Observable<VentaRegistro[]> {
+    return this.http.get<VentaRegistro[]>(`${this.apiUrl}/ventas`,
+      { params: this.rango(desde, hasta), withCredentials: true });
+  }
+
   // Reporte de ventas en PDF (resumen, medios de pago, más vendidos y vendedores)
   pdf(desde: string, hasta: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/pdf`,
+      { params: this.rango(desde, hasta), responseType: 'blob', withCredentials: true });
+  }
+
+  // El mismo reporte en Excel, con una hoja más: la lista de ventas
+  excel(desde: string, hasta: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/excel`,
       { params: this.rango(desde, hasta), responseType: 'blob', withCredentials: true });
   }
 

@@ -5,9 +5,22 @@ export interface ResumenReporte {
   hasta: string;
   totalVendido: number;
   numVentas: number;
-  ticketPromedio: number;
   numAnuladas: number;
   montoAnuladas: number;
+}
+
+// Una venta del periodo (confirmada o anulada). La fecha llega como yyyy-MM-ddTHH:mm:ss
+export type EstadoVenta = 'CONFIRMADA' | 'ANULADA';
+
+export interface VentaRegistro {
+  numero: string;
+  fecha: string;
+  comprobante: string;
+  cliente: string;
+  vendedor: string;
+  metodo: string;
+  total: number;
+  estado: EstadoVenta;
 }
 
 export interface VentaPorMetodo {
